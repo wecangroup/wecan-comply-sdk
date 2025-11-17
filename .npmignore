@@ -1,0 +1,17 @@
+src
+examples
+tsconfig*.json
+node_modules
+*.log
+.DS_Store
+.vscode
+.idea
+*.tsbuildinfo
+.git
+.gitignore
+.eslintrc*
+.prettierrc*
+*.test.ts
+*.spec.ts
+
+
