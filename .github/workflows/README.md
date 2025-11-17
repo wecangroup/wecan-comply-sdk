@@ -21,6 +21,22 @@ This workflow uses npm's Trusted Publisher feature with OIDC authentication, whi
 
 **Note**: No GitHub secrets are needed when using Trusted Publishers. The authentication is handled automatically via OIDC.
 
+### Troubleshooting 404 Errors
+
+If you get a 404 error when publishing, even though the package exists on npmjs.com, check the following:
+
+1. **Trusted Publisher Configuration**: Verify on npmjs.com that your Trusted Publisher is correctly configured:
+   - Repository name must match **exactly** (case-sensitive): `owner/repo-name`
+   - Workflow file path must match **exactly**: `.github/workflows/publish.yml`
+   - Environment name must match (if specified) or be left empty
+   - The Trusted Publisher must be **approved** and **active**
+
+2. **npm CLI Version**: The workflow automatically ensures npm CLI 11.5.1+ is used (required for Trusted Publishers)
+
+3. **Package Ownership**: Ensure your npm account has publish permissions for the package
+
+4. **Check Workflow Logs**: The workflow now includes diagnostic steps to help identify the issue
+
 ## Usage
 
 ### Automatic publishing via tag
