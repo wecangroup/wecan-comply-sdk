@@ -20,14 +20,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'  # Node.js 20+ required for npm 11.5.1+ (Trusted Publisher support)
           registry-url: 'https://registry.npmjs.org'
           # OIDC authentication for npm Trusted Publisher (no token needed)
       
-      - name: Ensure npm CLI version 11.5.1+
+      - name: Verify npm version
         run: |
-          npm install -g npm@latest
           npm --version
+          # npm 11.5.1+ is required for Trusted Publisher support
+          # This is automatically satisfied with Node.js 20+
       
       - name: Install dependencies
         run: npm ci

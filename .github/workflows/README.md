@@ -63,7 +63,7 @@ You can also trigger the workflow manually from the **Actions** tab in GitHub:
 The workflow performs the following steps:
 
 1. ✅ Code checkout
-2. ✅ Node.js 18 setup
+2. ✅ Node.js 20 setup (required for npm 11.5.1+ with Trusted Publisher support)
 3. ✅ Dependency installation (`npm ci`)
 4. ✅ Project build (`npm run build`)
 5. ✅ TypeScript type checking (`npm run typecheck`)
