@@ -4,21 +4,22 @@ This workflow automatically publishes the package to npm when a version tag is c
 
 ## Required Configuration
 
-### 1. Create an npm token
+### Setup npm Trusted Publisher
+
+This workflow uses npm's Trusted Publisher feature with OIDC authentication, which is more secure than using tokens.
 
 1. Log in to [npmjs.com](https://www.npmjs.com)
-2. Go to **Account Settings** → **Access Tokens** → **Generate New Token**
-3. Select the **Automation** type (recommended for CI/CD)
-4. Copy the generated token
+2. Go to your package page or **Account Settings** → **Access Tokens**
+3. Navigate to **Automation** → **Trusted Publishers**
+4. Click **Add Trusted Publisher**
+5. Configure the publisher:
+   - **Publisher**: Select "GitHub Actions"
+   - **Repository**: Enter your GitHub repository in the format `owner/repo-name` (e.g., `wecangroup/wecan-comply-sdk`)
+   - **Workflow file**: Enter `.github/workflows/publish.yml`
+   - **Environment name**: Leave empty (or specify if using environments)
+6. Click **Approve**
 
-### 2. Add the secret to GitHub
-
-1. Go to your GitHub repository
-2. **Settings** → **Secrets and variables** → **Actions**
-3. Click on **New repository secret**
-4. Name: `NPM_TOKEN`
-5. Value: paste the npm token you created
-6. Click **Add secret**
+**Note**: No GitHub secrets are needed when using Trusted Publishers. The authentication is handled automatically via OIDC.
 
 ## Usage
 

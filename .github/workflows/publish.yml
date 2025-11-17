@@ -9,6 +9,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for OIDC authentication with npm Trusted Publisher
     
     steps:
       - name: Checkout code
@@ -19,6 +22,7 @@ jobs:
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
+          # OIDC authentication for npm Trusted Publisher (no token needed)
       
       - name: Install dependencies
         run: npm ci
@@ -42,6 +46,5 @@ jobs:
       
       - name: Publish to npm
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # Uses OIDC authentication via npm Trusted Publisher (no token needed)
 
