@@ -1,5 +1,5 @@
 {
-  "name": "wecan-comply-sdk",
+  "name": "wecan-comply-sdk-js",
   "version": "0.1.0",
   "description": "TypeScript SDK for the Wecan Comply API with encryption support, workspace and vault management",
   "license": "MIT",

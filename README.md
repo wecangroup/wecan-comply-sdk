@@ -15,7 +15,7 @@ TypeScript SDK for the Wecan Comply API, usable from the browser or Node.js (>=1
 ## Install
 
 ```bash
-npm i wecan-comply-sdk
+npm i wecan-comply-sdk-js
 ```
 
 ## Quick Start
@@ -25,7 +25,7 @@ npm i wecan-comply-sdk
 The SDK uses access token authentication. You need to provide an `accessToken` when creating the SDK instance:
 
 ```ts
-import { WecanComply } from 'wecan-comply-sdk';
+import { WecanComply } from 'wecan-comply-sdk-js';
 
 // With workspace keys (for decryption/encryption operations)
 const client = await WecanComply.create({
@@ -270,7 +270,7 @@ import type {
   BusinessType,
   WorkspaceDetails,
   // ... and more
-} from 'wecan-comply-sdk';
+} from 'wecan-comply-sdk-js';
 ```
 
 ## License
