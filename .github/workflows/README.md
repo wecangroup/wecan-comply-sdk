@@ -23,19 +23,25 @@ This workflow uses npm's Trusted Publisher feature with OIDC authentication, whi
 
 ### Troubleshooting 404 Errors
 
-If you get a 404 error when publishing, even though the package exists on npmjs.com, check the following:
+If you get a 404 error when publishing, even though the package exists on npmjs.com, this usually means the Trusted Publisher doesn't have permissions for this package. Check the following:
 
-1. **Trusted Publisher Configuration**: Verify on npmjs.com that your Trusted Publisher is correctly configured:
+1. **Package Ownership**: **CRITICAL** - The Trusted Publisher can only publish packages that belong to the npm account/organization that configured it. If the package was created with a different npm account, the Trusted Publisher won't work.
+   - Verify which npm account owns the package: `npm owner ls wecan-comply-sdk-js`
+   - Ensure the Trusted Publisher is configured on the same npm account that owns the package
+   - If the package belongs to an organization, the Trusted Publisher must be configured for that organization
+
+2. **Trusted Publisher Configuration**: Verify on npmjs.com that your Trusted Publisher is correctly configured:
+   - Go to **Account Settings** → **Access Tokens** → **Trusted Publishers**
    - Repository name must match **exactly** (case-sensitive): `owner/repo-name`
    - Workflow file path must match **exactly**: `.github/workflows/publish.yml`
    - Environment name must match (if specified) or be left empty
    - The Trusted Publisher must be **approved** and **active**
 
-2. **npm CLI Version**: The workflow automatically ensures npm CLI 11.5.1+ is used (required for Trusted Publishers)
+3. **Alternative Solution**: If the package was created with a different account, you have two options:
+   - **Option A**: Transfer the package to the account that has the Trusted Publisher configured
+   - **Option B**: Use a traditional npm token instead of Trusted Publisher (less secure but more flexible)
 
-3. **Package Ownership**: Ensure your npm account has publish permissions for the package
-
-4. **Check Workflow Logs**: The workflow now includes diagnostic steps to help identify the issue
+4. **Check Workflow Logs**: The workflow includes diagnostic steps that will show authentication status and package access
 
 ## Usage
 

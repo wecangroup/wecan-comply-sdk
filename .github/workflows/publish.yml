@@ -75,12 +75,28 @@ jobs:
           CURRENT_VERSION=$(npm view "$PACKAGE_NAME" version 2>/dev/null || echo "not found")
           echo "Current version on npm: $CURRENT_VERSION"
       
+      - name: Check npm authentication
+        run: |
+          echo "🔐 Checking npm authentication..."
+          echo "Registry: $(npm config get registry)"
+          echo "Whoami: $(npm whoami 2>&1 || echo 'Not authenticated')"
+          echo "OIDC token available: $([ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ] && echo 'Yes' || echo 'No')"
+      
+      - name: Check package access
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          echo "🔍 Checking package access..."
+          npm access ls-packages 2>&1 | head -20 || echo "Cannot list packages (may need manual authentication)"
+          echo ""
+          echo "Trying to view package details..."
+          npm view "$PACKAGE_NAME" --json 2>&1 | head -10 || echo "Cannot view package"
+      
       - name: Publish to npm
         run: npm publish --access public
         # Uses OIDC authentication via npm Trusted Publisher (no token needed)
-        # If this fails with 404, check Trusted Publisher configuration:
-        # - Repository name must match exactly (owner/repo-name, case-sensitive)
-        # - Workflow file path must match exactly (.github/workflows/publish.yml)
-        # - Ensure npm CLI version is 11.5.1+ (already handled above)
-        # - Verify the Trusted Publisher is approved and active on npmjs.com
+        # If this fails with 404, possible causes:
+        # 1. Trusted Publisher not configured correctly (repository name, workflow path)
+        # 2. Trusted Publisher doesn't have publish permissions for this package
+        # 3. Package was created with a different npm account
+        # 4. OIDC authentication not working properly
 
