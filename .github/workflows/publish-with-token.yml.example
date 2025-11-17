@@ -1,0 +1,53 @@
+name: Publish to npm (with token)
+
+# Alternative workflow using traditional npm token instead of Trusted Publisher
+# To use this workflow:
+# 1. Rename this file to publish.yml (or use it alongside the OIDC version)
+# 2. Create an npm token: npmjs.com → Account Settings → Access Tokens → Generate New Token (Automation)
+# 3. Add the token as a GitHub secret: Settings → Secrets → Actions → New repository secret (name: NPM_TOKEN)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Run type check
+        run: npm run typecheck
+      
+      - name: Verify version matches tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "❌ Error: Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION)"
+            exit 1
+          fi
+          echo "✅ Version match: $PACKAGE_VERSION"
+      
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+

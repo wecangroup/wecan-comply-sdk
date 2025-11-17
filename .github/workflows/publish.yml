@@ -22,13 +22,20 @@ jobs:
         with:
           node-version: '20'  # Node.js 20+ required for npm 11.5.1+ (Trusted Publisher support)
           registry-url: 'https://registry.npmjs.org'
-          # OIDC authentication for npm Trusted Publisher (no token needed)
       
       - name: Verify npm version
         run: |
           npm --version
           # npm 11.5.1+ is required for Trusted Publisher support
           # This is automatically satisfied with Node.js 20+
+      
+      - name: Configure npm for OIDC authentication
+        run: |
+          # Configure npm to use OIDC authentication for Trusted Publishers
+          # This is required for npm 11.5.1+ with Trusted Publishers
+          npm config set registry https://registry.npmjs.org/
+          # npm will automatically use OIDC when publishing if Trusted Publisher is configured
+          echo "✅ npm configured for OIDC authentication"
       
       - name: Install dependencies
         run: npm ci
@@ -79,8 +86,10 @@ jobs:
         run: |
           echo "🔐 Checking npm authentication..."
           echo "Registry: $(npm config get registry)"
-          echo "Whoami: $(npm whoami 2>&1 || echo 'Not authenticated')"
           echo "OIDC token available: $([ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ] && echo 'Yes' || echo 'No')"
+          echo ""
+          echo "ℹ️  Note: 'npm whoami' may fail with OIDC, but publishing should still work"
+          echo "ℹ️  Trusted Publishers authenticate automatically during publish"
       
       - name: Check package access
         run: |
