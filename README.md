@@ -29,7 +29,6 @@ import { WecanComply } from 'wecan-comply-sdk-js';
 
 // With workspace keys (for decryption/encryption operations)
 const client = await WecanComply.create({
-  baseUrl: 'https://core.int.wecancomply.ch',
   accessToken: 'your-access-token-here',
   workspaceKeys: [
     {
@@ -169,8 +168,6 @@ interface WorkspaceKeyConfig {
 }
 
 interface WecanComplyOptions {
-  /** Base URL of the API (no trailing slash) */
-  baseUrl: string;
   /** Access token for authentication (required) */
   accessToken: string;
   /** List of workspace private keys to load (optional, needed for encryption/decryption) */
@@ -204,7 +201,6 @@ The SDK provides an `onUnauthorized` callback for handling 401 errors:
 
 ```ts
 const client = await WecanComply.create({
-  baseUrl: 'https://core.int.wecancomply.ch',
   accessToken: 'your-access-token-here',
   workspaceUrlTemplate: 'https://{workspaceUuid}.int.wecancomply.ch',
   onUnauthorized: async (error) => {

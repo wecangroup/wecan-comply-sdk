@@ -34,8 +34,6 @@ export interface WorkspaceKeyConfig {
  * Options for creating a WecanComply SDK instance
  */
 export interface WecanComplyOptions {
-    /** Base URL of the API (no trailing slash) */
-    baseUrl: string;
     /** Access token for authentication */
     accessToken: string;
     /** List of workspace private keys to load */
@@ -68,7 +66,6 @@ function joinUrl(baseUrl: string, path: string): string {
  * @example
  * ```typescript
  * const sdk = await WecanComply.create({
- *   baseUrl: 'https://api.wecancomply.ch',
  *   accessToken: 'your-access-token',
  *   workspaceUrlTemplate: 'https://{workspaceUuid}.int.wecancomply.ch',
  *   workspaceKeys: [{
@@ -81,7 +78,6 @@ function joinUrl(baseUrl: string, path: string): string {
  * ```
  */
 export class WecanComply {
-    private readonly baseUrl: string;
     private readonly http: HttpClient;
     private readonly accessToken: string;
     private readonly timeoutMs: number;
@@ -96,7 +92,6 @@ export class WecanComply {
     public readonly vault: VaultFeature;
 
     private constructor(options: WecanComplyOptions) {
-        this.baseUrl = options.baseUrl;
         this.accessToken = options.accessToken;
         this.timeoutMs = options.timeoutMs ?? 30_000;
         this.retries = options.retries ?? 2;
@@ -106,7 +101,7 @@ export class WecanComply {
         if (options.http) {
             this.http = options.http;
         } else {
-            const axiosInstance = axios.create({ baseURL: this.baseUrl });
+            const axiosInstance = axios.create();
             axiosRetry(axiosInstance, {
                 retries: this.retries,
                 retryDelay: axiosRetry.exponentialDelay,
@@ -139,7 +134,6 @@ export class WecanComply {
      * @example
      * ```typescript
      * const sdk = await WecanComply.create({
-     *   baseUrl: 'https://api.wecancomply.ch',
      *   accessToken: 'your-access-token',
      *   workspaceUrlTemplate: 'https://{workspaceUuid}.int.wecancomply.ch',
      *   workspaceKeys: [{
@@ -151,10 +145,9 @@ export class WecanComply {
      * ```
      */
     static async create(options: WecanComplyOptions): Promise<WecanComply> {
-        const baseUrl = options.baseUrl;
         const retries = options.retries ?? 2;
 
-        const axiosInstance = axios.create({ baseURL: baseUrl });
+        const axiosInstance = axios.create();
         axiosRetry(axiosInstance, {
             retries,
             retryDelay: axiosRetry.exponentialDelay,
@@ -185,8 +178,7 @@ export class WecanComply {
         return headers;
     }
 
-    private async send<T>(method: HttpMethod, path: string, body?: unknown, headers?: HeadersInitLike, customBaseUrl?: string): Promise<T> {
-        const baseUrl = customBaseUrl || this.baseUrl;
+    private async send<T>(method: HttpMethod, path: string, baseUrl: string, body?: unknown, headers?: HeadersInitLike): Promise<T> {
         const url = joinUrl(baseUrl, path);
         try {
             const response = await this.http.request<T>({
@@ -266,23 +258,23 @@ export class WecanComply {
         return {
             get: <T = unknown>(path: string, headers?: HeadersInitLike) => {
                 logRequest('GET', path);
-                return this.send<T>('GET', path, undefined, headers, workspaceBaseUrl);
+                return this.send<T>('GET', path, workspaceBaseUrl, undefined, headers);
             },
             post: <T = unknown>(path: string, body?: unknown, headers?: HeadersInitLike) => {
                 logRequest('POST', path, body);
-                return this.send<T>('POST', path, body, headers, workspaceBaseUrl);
+                return this.send<T>('POST', path, workspaceBaseUrl, body, headers);
             },
             put: <T = unknown>(path: string, body?: unknown, headers?: HeadersInitLike) => {
                 logRequest('PUT', path, body);
-                return this.send<T>('PUT', path, body, headers, workspaceBaseUrl);
+                return this.send<T>('PUT', path, workspaceBaseUrl, body, headers);
             },
             patch: <T = unknown>(path: string, body?: unknown, headers?: HeadersInitLike) => {
                 logRequest('PATCH', path, body);
-                return this.send<T>('PATCH', path, body, headers, workspaceBaseUrl);
+                return this.send<T>('PATCH', path, workspaceBaseUrl, body, headers);
             },
             delete: <T = unknown>(path: string, headers?: HeadersInitLike) => {
                 logRequest('DELETE', path);
-                return this.send<T>('DELETE', path, undefined, headers, workspaceBaseUrl);
+                return this.send<T>('DELETE', path, workspaceBaseUrl, undefined, headers);
             },
         };
     }
