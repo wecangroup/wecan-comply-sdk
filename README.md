@@ -8,6 +8,7 @@ TypeScript SDK for the Wecan Comply API, usable from the browser or Node.js (>=1
 - 🔑 **Encryption**: OpenPGP encryption/decryption support
 - 📦 **Workspace Management**: Get workspace details, business types, relations, and network entries
 - 🗄️ **Vault Management**: Manage vaults, placeholders, answers, files, and sharing
+- 📋 **External Form Requests**: Create and manage external form requests for public form submissions
 - 🔄 **Automatic Retries**: Built-in retry logic with exponential backoff
 - 🌐 **Dual Format**: Supports both ESM and CommonJS
 - 📝 **Request Logging**: Automatic logging of all workspace API calls
@@ -49,7 +50,10 @@ const client = await WecanComply.create({
 });
 ```
 
-**Note**: When you provide `workspaceKeys`, the SDK automatically fetches the corresponding public keys from the API and stores both keys for encryption/decryption operations.
+**Important Notes**:
+- When you provide `workspaceKeys`, the SDK automatically fetches the corresponding public keys from the API and stores both keys for encryption/decryption operations
+- The `workspaceUrlTemplate` must include `{workspaceUuid}` as a placeholder, which will be replaced with the actual workspace UUID
+- Enable `debug: true` to see all workspace API calls logged to the console (useful for development)
 
 ### Workspace Operations
 
@@ -157,6 +161,74 @@ const modifiedAnswers = answers.map(answer => ({
 await client.saveVaultAnswers(workspaceUuid, vaultId, modifiedAnswers);
 ```
 
+### External Form Request Operations
+
+External Form Requests allow you to create public-facing forms that external users can fill out and submit. These forms are based on push templates and can be shared via a public URL.
+
+```ts
+const workspaceUuid = 'your-workspace-uuid';
+
+// List external form requests with optional filtering
+const requests = await client.listExternalFormRequests(workspaceUuid, {
+  status: 'active',
+  push_template_uuid: 'template-uuid',
+  limit: 10,
+  offset: 0,
+  ordering: ['-created_at'] // Sort by creation date descending
+});
+
+// Create a new external form request
+const newRequest = await client.createExternalFormRequest(
+  workspaceUuid,
+  'push-template-uuid',
+  'active' // Optional: 'active' | 'archived' | 'expired'
+);
+
+// Get a specific external form request
+const request = await client.getExternalFormRequest(workspaceUuid, requestUuid);
+
+// Get form metadata (structure for rendering the form)
+// This endpoint is public and doesn't require authentication
+const metadata = await client.getExternalFormRequestMetadata(workspaceUuid, requestUuid);
+console.log('Form structure:', metadata.push_template);
+console.log('Information text:', metadata.information_text);
+
+// Upload a file for the form (public endpoint)
+const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+const file = fileInput.files[0];
+const fileInfo = await client.uploadExternalFormRequestFile(
+  workspaceUuid,
+  requestUuid,
+  file
+);
+console.log('Uploaded file UUID:', fileInfo.file_uuid);
+
+// Submit form answers (public endpoint)
+await client.submitExternalFormRequest(
+  workspaceUuid,
+  requestUuid,
+  [
+    {
+      item_placeholder_uuid: 'item-placeholder-uuid',
+      content: [
+        {
+          uuid: 'entry-uuid',
+          content_format: 'inline',
+          content: 'Answer text here'
+        },
+        {
+          uuid: 'file-entry-uuid',
+          content_format: 'file',
+          content: fileInfo.file_uuid // Use the UUID from file upload
+        }
+      ]
+    }
+  ]
+);
+```
+
+**Note**: The `uploadExternalFormRequestFile` and `submitExternalFormRequest` endpoints are public and don't require authentication. This allows external users to submit forms without needing API credentials.
+
 ## Configuration Options
 
 ```ts
@@ -253,18 +325,37 @@ This package includes full TypeScript definitions. All types are exported from t
 
 ```ts
 import type {
+  // Configuration
   WecanComplyOptions,
   WorkspaceKeyConfig,
+  
+  // Identifiers
   WorkspaceUuid,
   VaultUuid,
-  VaultAnswer,
-  Vault,
-  VaultPlaceholder,
-  PushCategory,
+  ExternalFormRequestUuid,
+  
+  // Workspace
+  WorkspaceDetails,
+  BusinessType,
   Relation,
   NetworkEntry,
-  BusinessType,
-  WorkspaceDetails,
+  
+  // Vault
+  Vault,
+  VaultPlaceholder,
+  VaultAnswer,
+  PushCategory,
+  
+  // External Form Request
+  ExternalFormRequest,
+  ExternalFormRequestStatus,
+  ExternalFormRequestMetadata,
+  ExternalFormRequestListOptions,
+  PaginatedExternalFormRequestList,
+  ExternalFormAnswerRequest,
+  ExternalFormAnswerEntryRequest,
+  ExternalFormFileUploadResponse,
+  
   // ... and more
 } from 'wecan-comply-sdk-js';
 ```
