@@ -1,7 +1,7 @@
 {
   "name": "wecan-comply-sdk-js",
   "version": "0.1.3",
-  "description": "TypeScript SDK for the Wecan Comply API with encryption support, workspace and vault management",
+  "description": "TypeScript SDK for the Wecan Comply API with encryption support, workspace and vault management and external form requests",
   "license": "MIT",
   "author": "Wecan Group",
   "type": "module",
@@ -33,7 +33,8 @@
     "encryption",
     "openpgp",
     "vault",
-    "workspace"
+    "workspace",
+    "external-form-request"
   ],
   "scripts": {
     "clean": "rimraf dist",
