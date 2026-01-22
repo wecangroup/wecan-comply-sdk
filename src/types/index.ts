@@ -185,3 +185,81 @@ export interface PushCategory {
     label: string;
     push_template_uuids: string[];
 }
+
+export type ExternalFormRequestUuid = string;
+
+export type ExternalFormRequestStatus = 'active' | 'archived' | 'expired';
+
+export interface PushTemplate {
+    uuid: string;
+    label?: string;
+    [key: string]: any;
+}
+
+export interface NestedPushForm {
+    uuid: string;
+    [key: string]: any;
+}
+
+export interface ExternalFormRequest {
+    uuid: ExternalFormRequestUuid;
+    push_template: PushTemplate;
+    submission_count: number;
+    status: ExternalFormRequestStatus;
+    url: string;
+    push_forms: NestedPushForm[];
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ExternalFormAnswerEntryRequest {
+    uuid: string;
+    content_format: string;
+    content: any;
+}
+
+export interface ExternalFormAnswerRequest {
+    item_placeholder_uuid: string;
+    content: ExternalFormAnswerEntryRequest[];
+}
+
+export interface ExternalFormFileUploadResponse {
+    file_uuid: string;
+    file_name: string;
+    file_size: number;
+    file_mimetype: string;
+}
+
+export interface WorkspaceMetadata {
+    uuid: string;
+    name: string;
+    [key: string]: any;
+}
+
+export interface PushTemplateMetadata {
+    uuid: string;
+    label: string;
+    [key: string]: any;
+}
+
+export interface ExternalFormRequestMetadata {
+    workspace?: WorkspaceMetadata;
+    push_template: PushTemplateMetadata;
+    status?: string;
+    information_text?: string | null;
+}
+
+export interface ExternalFormRequestListOptions {
+    limit?: number;
+    offset?: number;
+    push_template_uuid?: string;
+    status?: ExternalFormRequestStatus;
+    ordering?: string[];
+}
+
+export interface PaginatedExternalFormRequestList {
+    count: number;
+    next?: string | null;
+    previous?: string | null;
+    results: ExternalFormRequest[];
+}

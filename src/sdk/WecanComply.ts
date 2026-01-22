@@ -14,10 +14,19 @@ import type {
     VaultUuid,
     VaultAnswer,
     Vault,
-    VaultPlaceholder } from '../types';
+    VaultPlaceholder,
+    ExternalFormRequestUuid,
+    ExternalFormRequest,
+    ExternalFormRequestStatus,
+    ExternalFormAnswerRequest,
+    ExternalFormFileUploadResponse,
+    ExternalFormRequestMetadata,
+    ExternalFormRequestListOptions,
+    PaginatedExternalFormRequestList } from '../types';
 import { setWorkspaceKeys } from '../services/key-store';
 import { WorkspaceFeature } from './features/workspace';
 import { VaultFeature } from './features/vault';
+import { ExternalFormRequestFeature } from './features/external-form-request';
 import type { FeatureContext, WorkspaceClient } from './features/BaseFeature';
 
 /**
@@ -90,6 +99,7 @@ export class WecanComply {
     // Feature modules
     public readonly workspace: WorkspaceFeature;
     public readonly vault: VaultFeature;
+    public readonly externalFormRequest: ExternalFormRequestFeature;
 
     private constructor(options: WecanComplyOptions) {
         this.accessToken = options.accessToken;
@@ -123,6 +133,7 @@ export class WecanComply {
         
         this.workspace = new WorkspaceFeature(featureContext);
         this.vault = new VaultFeature(featureContext);
+        this.externalFormRequest = new ExternalFormRequestFeature(featureContext);
     }
 
     /**
@@ -294,7 +305,10 @@ export class WecanComply {
      * @param availableForBusinessType - Optional filter for business types available for a specific business type
      * @returns List of available business types
      */
-    async getBusinessTypes(workspaceUuid: WorkspaceUuid, availableForBusinessType?: string): Promise<BusinessType[]> {
+    async getBusinessTypes(
+        workspaceUuid: WorkspaceUuid,
+        availableForBusinessType?: string
+    ): Promise<BusinessType[]> {
         return this.workspace.getBusinessTypes(workspaceUuid, availableForBusinessType);
     }
 
@@ -313,7 +327,10 @@ export class WecanComply {
      * @param businessType - Optional filter by business type
      * @returns List of network entries
      */
-    async getNetworkEntries(workspaceUuid: WorkspaceUuid, businessType?: string): Promise<NetworkEntry[]> {
+    async getNetworkEntries(
+        workspaceUuid: WorkspaceUuid,
+        businessType?: string
+    ): Promise<NetworkEntry[]> {
         return this.workspace.getNetworkEntries(workspaceUuid, businessType);
     }
 
@@ -332,7 +349,10 @@ export class WecanComply {
      * @param vaultId - The UUID of the vault
      * @returns List of vault placeholders defining the structure of the vault
      */
-    async getVaultPlaceholders(workspaceUuid: WorkspaceUuid, vaultId: VaultUuid): Promise<VaultPlaceholder[]> {
+    async getVaultPlaceholders(
+        workspaceUuid: WorkspaceUuid,
+        vaultId: VaultUuid
+    ): Promise<VaultPlaceholder[]> {
         return this.vault.getVaultPlaceholders(workspaceUuid, vaultId);
     }
 
@@ -342,7 +362,10 @@ export class WecanComply {
      * @param vaultId - The UUID of the vault
      * @returns List of vault answers with decrypted inline content
      */
-    async getVaultAnswers(workspaceUuid: WorkspaceUuid, vaultId: VaultUuid): Promise<VaultAnswer[]> {
+    async getVaultAnswers(
+        workspaceUuid: WorkspaceUuid,
+        vaultId: VaultUuid
+    ): Promise<VaultAnswer[]> {
         return this.vault.getVaultAnswers(workspaceUuid, vaultId);
     }
 
@@ -353,7 +376,11 @@ export class WecanComply {
      * @param fileMimetype - The MIME type of the file
      * @returns Decrypted file content as a Blob
      */
-    async downloadVaultFile(workspaceUuid: WorkspaceUuid, fileUuid: string, fileMimetype: string): Promise<Blob> {
+    async downloadVaultFile(
+        workspaceUuid: WorkspaceUuid,
+        fileUuid: string,
+        fileMimetype: string
+    ): Promise<Blob> {
         return this.vault.downloadVaultFile(workspaceUuid, fileUuid, fileMimetype);
     }
 
@@ -362,7 +389,10 @@ export class WecanComply {
      * @param workspaceUuid - The UUID of the workspace
      * @param vaultId - The UUID of the vault to lock
      */
-    async lockVault(workspaceUuid: WorkspaceUuid, vaultId: VaultUuid): Promise<void> {
+    async lockVault(
+        workspaceUuid: WorkspaceUuid,
+        vaultId: VaultUuid
+    ): Promise<void> {
         return this.vault.lockVault(workspaceUuid, vaultId);
     }
 
@@ -371,7 +401,10 @@ export class WecanComply {
      * @param workspaceUuid - The UUID of the workspace
      * @param vaultId - The UUID of the vault to unlock
      */
-    async unlockVault(workspaceUuid: WorkspaceUuid, vaultId: VaultUuid): Promise<void> {
+    async unlockVault(
+        workspaceUuid: WorkspaceUuid,
+        vaultId: VaultUuid
+    ): Promise<void> {
         return this.vault.unlockVault(workspaceUuid, vaultId);
     }
 
@@ -381,7 +414,11 @@ export class WecanComply {
      * @param vaultId - The UUID of the vault
      * @param answers - List of vault answers to save (only entries with new_content will be updated)
      */
-    async saveVaultAnswers(workspaceUuid: WorkspaceUuid, vaultId: VaultUuid, answers: any): Promise<void> {
+    async saveVaultAnswers(
+        workspaceUuid: WorkspaceUuid,
+        vaultId: VaultUuid,
+        answers: any
+    ): Promise<void> {
         return this.vault.saveVaultAnswers(workspaceUuid, vaultId, answers);
     }
 
@@ -391,7 +428,10 @@ export class WecanComply {
      * @param templateType - Optional filter by template type
      * @returns List of push categories with their template UUIDs
      */
-    async getPushCategories(workspaceUuid: WorkspaceUuid, templateType?: string): Promise<PushCategory[]> {
+    async getPushCategories(
+        workspaceUuid: WorkspaceUuid,
+        templateType?: string
+    ): Promise<PushCategory[]> {
         return this.vault.getPushCategories(workspaceUuid, templateType);
     }
 
@@ -404,7 +444,13 @@ export class WecanComply {
      * @param relationUuids - List of relation UUIDs to associate with the vault
      * @returns The created vault
      */
-    async createVault(workspaceUuid: WorkspaceUuid, name: string, templateType: string, pushCategoryUuid: string, relationUuids: string[]): Promise<Vault> {
+    async createVault(
+        workspaceUuid: WorkspaceUuid,
+        name: string,
+        templateType: string,
+        pushCategoryUuid: string,
+        relationUuids: string[]
+    ): Promise<Vault> {
         return this.vault.createVault(workspaceUuid, name, templateType, pushCategoryUuid, relationUuids);
     }
 
@@ -414,7 +460,97 @@ export class WecanComply {
      * @param vaultId - The UUID of the vault to share
      * @param relationUuid - The UUID of the relation to share with
      */
-    async shareVault(workspaceUuid: WorkspaceUuid, vaultId: VaultUuid, relationUuid: string): Promise<void> {
+    async shareVault(
+        workspaceUuid: WorkspaceUuid,
+        vaultId: VaultUuid,
+        relationUuid: string
+    ): Promise<void> {
         return this.vault.shareVault(workspaceUuid, vaultId, relationUuid);
+    }
+
+    /**
+     * List external form requests
+     * @param workspaceUuid - The UUID of the workspace
+     * @param options - Optional query parameters for filtering and pagination
+     * @returns Paginated list of external form requests
+     */
+    async listExternalFormRequests(
+        workspaceUuid: WorkspaceUuid,
+        options?: ExternalFormRequestListOptions
+    ): Promise<PaginatedExternalFormRequestList> {
+        return this.externalFormRequest.listExternalFormRequests(workspaceUuid, options);
+    }
+
+    /**
+     * Create a new external form request
+     * @param workspaceUuid - The UUID of the workspace
+     * @param pushTemplateUuid - The UUID of the push template
+     * @param status - Optional status for the external form request
+     * @returns The created external form request
+     */
+    async createExternalFormRequest(
+        workspaceUuid: WorkspaceUuid,
+        pushTemplateUuid: string,
+        status?: ExternalFormRequestStatus
+    ): Promise<ExternalFormRequest> {
+        return this.externalFormRequest.createExternalFormRequest(workspaceUuid, pushTemplateUuid, status);
+    }
+
+    /**
+     * Retrieve a specific external form request
+     * @param workspaceUuid - The UUID of the workspace
+     * @param uuid - The UUID of the external form request
+     * @returns The external form request
+     */
+    async getExternalFormRequest(
+        workspaceUuid: WorkspaceUuid,
+        uuid: ExternalFormRequestUuid
+    ): Promise<ExternalFormRequest> {
+        return this.externalFormRequest.getExternalFormRequest(workspaceUuid, uuid);
+    }
+
+    /**
+     * Get external form request metadata (form structure for rendering)
+     * This is a public endpoint that doesn't require authentication
+     * @param workspaceUuid - The UUID of the workspace
+     * @param uuid - The UUID of the external form request
+     * @returns The external form request metadata
+     */
+    async getExternalFormRequestMetadata(
+        workspaceUuid: WorkspaceUuid,
+        uuid: ExternalFormRequestUuid
+    ): Promise<ExternalFormRequestMetadata> {
+        return this.externalFormRequest.getExternalFormRequestMetadata(workspaceUuid, uuid);
+    }
+
+    /**
+     * Upload a file for an external form request
+     * This is a public endpoint that doesn't require authentication
+     * @param workspaceUuid - The UUID of the workspace
+     * @param uuid - The UUID of the external form request
+     * @param file - The file to upload (as FormData or File)
+     * @returns The uploaded file information
+     */
+    async uploadExternalFormRequestFile(
+        workspaceUuid: WorkspaceUuid,
+        uuid: ExternalFormRequestUuid,
+        file: File | FormData
+    ): Promise<ExternalFormFileUploadResponse> {
+        return this.externalFormRequest.uploadExternalFormRequestFile(workspaceUuid, uuid, file);
+    }
+
+    /**
+     * Submit external form request answers
+     * This is a public endpoint that doesn't require authentication
+     * @param workspaceUuid - The UUID of the workspace
+     * @param uuid - The UUID of the external form request
+     * @param answers - Array of answers to submit
+     */
+    async submitExternalFormRequest(
+        workspaceUuid: WorkspaceUuid,
+        uuid: ExternalFormRequestUuid,
+        answers: ExternalFormAnswerRequest[]
+    ): Promise<void> {
+        return this.externalFormRequest.submitExternalFormRequest(workspaceUuid, uuid, answers);
     }
 }
