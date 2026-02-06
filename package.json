@@ -1,6 +1,6 @@
 {
   "name": "wecan-comply-sdk-js",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "TypeScript SDK for the Wecan Comply API with encryption support, workspace and vault management and external form requests",
   "license": "MIT",
   "author": "Wecan Group",
@@ -58,5 +58,3 @@
     "typescript": "^5.6.3"
   }
 }
-
-
