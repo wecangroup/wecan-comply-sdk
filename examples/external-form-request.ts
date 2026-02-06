@@ -11,18 +11,24 @@
 import fs from 'fs';
 import { WecanComply } from '../src/index.js';
 
-/** First item UUID from metadata (push_template.template_placeholder.items[0].item.uuid) */
-function getFirstItemUuid(metadata: Record<string, unknown>): string | undefined {
-  const pt = metadata?.push_template as Record<string, unknown> | undefined;
-  const items = (pt?.template_placeholder as Record<string, unknown>)?.items as Array<{ item?: { uuid?: string } }> | undefined;
-  return items?.[0]?.item?.uuid;
-}
+type ItemEntry = { item?: { uuid?: string; entries?: Array<{ uuid?: string; field_type?: string }> } };
 
-/** First entry UUID of the first item (for content[].uuid) */
-function getFirstEntryUuid(metadata: Record<string, unknown>): string | undefined {
+/** First item/entry with field_type "text" from metadata */
+function getFirstTextItemAndEntry(metadata: Record<string, unknown>): { itemUuid: string; entryUuid: string } | undefined {
   const pt = metadata?.push_template as Record<string, unknown> | undefined;
-  const items = (pt?.template_placeholder as Record<string, unknown>)?.items as Array<{ item?: { entries?: Array<{ uuid?: string }> } }> | undefined;
-  return items?.[0]?.item?.entries?.[0]?.uuid;
+  const items = (pt?.template_placeholder as Record<string, unknown>)?.items as ItemEntry[] | undefined;
+  if (!items) return undefined;
+  for (const row of items) {
+    const itemUuid = row?.item?.uuid;
+    const entries = row?.item?.entries;
+    if (!itemUuid || !entries) continue;
+    for (const entry of entries) {
+      if (entry?.field_type === 'text' && entry?.uuid) {
+        return { itemUuid, entryUuid: entry.uuid };
+      }
+    }
+  }
+  return undefined;
 }
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
@@ -128,20 +134,19 @@ async function main() {
     console.log('Information text:', metadata.information_text);
   }
   
-  // --- 4. Submit answers (use first item/entry from metadata) ---
+  // --- 4. Submit answers (first item/entry with field_type "text" from metadata) ---
   const shouldSubmit = process.env.SUBMIT_ANSWERS !== '0' && process.env.SUBMIT_ANSWERS?.toLowerCase() !== 'false';
   const meta = metadata as unknown as Record<string, unknown>;
-  const firstItemUuid = getFirstItemUuid(meta);
-  const firstEntryUuid = getFirstEntryUuid(meta);
+  const firstText = getFirstTextItemAndEntry(meta);
   let submitted = false;
-  if (shouldSubmit && metadata.push_template && firstItemUuid && firstEntryUuid) {
+  if (shouldSubmit && metadata.push_template && firstText) {
     console.log('\n--- Submit answers (example) ---');
     const answers = [
       {
-        item_placeholder_uuid: firstItemUuid,
+        item_placeholder_uuid: firstText.itemUuid,
         content: [
           {
-            uuid: firstEntryUuid,
+            uuid: firstText.entryUuid,
             content_format: 'inline',
             content: 'Example inline answer',
           },
@@ -155,6 +160,8 @@ async function main() {
     console.log(
       '\nSubmit is disabled (SUBMIT_ANSWERS=0). Set SUBMIT_ANSWERS=1 or leave unset to submit, and ensure placeholder/entry UUIDs match your template.'
     );
+  } else if (shouldSubmit && !firstText) {
+    console.log('\nNo item/entry with field_type "text" found in metadata; submit skipped.');
   }
   // ------------------------------------------------------------------------------------------------
 
