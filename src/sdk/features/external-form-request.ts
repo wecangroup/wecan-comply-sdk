@@ -57,12 +57,14 @@ export class ExternalFormRequestFeature {
      * @param workspaceUuid - The UUID of the workspace
      * @param pushTemplateUuid - The UUID of the push template
      * @param status - Optional status for the external form request
+     * @param informationText - Optional text displayed to the user when filling the form
      * @returns The created external form request
      */
     async createExternalFormRequest(
         workspaceUuid: WorkspaceUuid,
         pushTemplateUuid: string,
-        status?: ExternalFormRequestStatus
+        status?: ExternalFormRequestStatus,
+        informationText?: string | null
     ): Promise<ExternalFormRequest> {
         const workspaceClient = this.context.getWorkspaceClient(workspaceUuid);
         return await workspaceClient.post<ExternalFormRequest>(
@@ -70,6 +72,7 @@ export class ExternalFormRequestFeature {
             {
                 push_template_uuid: pushTemplateUuid,
                 ...(status && { status }),
+                ...(informationText !== undefined && informationText !== null && { information_text: informationText }),
             }
         );
     }
@@ -103,7 +106,7 @@ export class ExternalFormRequestFeature {
     ): Promise<ExternalFormRequestMetadata> {
         const workspaceClient = this.context.getWorkspaceClient(workspaceUuid);
         return await workspaceClient.get<ExternalFormRequestMetadata>(
-            `/api/forms/external-form-requests/${uuid}/metadata/`
+            `/api/forms/external-form-requests/public/${uuid}/metadata/`
         );
     }
 
@@ -131,7 +134,7 @@ export class ExternalFormRequestFeature {
         }
 
         return await workspaceClient.post<ExternalFormFileUploadResponse>(
-            `/api/forms/external-form-requests/${uuid}/actions/upload-file/`,
+            `/api/forms/external-form-requests/public/${uuid}/actions/upload-file/`,
             formData
         );
     }
@@ -150,7 +153,7 @@ export class ExternalFormRequestFeature {
     ): Promise<void> {
         const workspaceClient = this.context.getWorkspaceClient(workspaceUuid);
         await workspaceClient.post(
-            `/api/forms/external-form-requests/${uuid}/actions/submit/`,
+            `/api/forms/external-form-requests/public/${uuid}/actions/submit/`,
             { answers }
         );
     }

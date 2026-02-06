@@ -64,6 +64,9 @@ node_modules/
 # Encrypted messages
 *.asc
 
+# Example: workspace private key (local tests only, do not commit)
+examples/workspace-private-key.asc
+
 # Python
 __pycache__/
 .venv/

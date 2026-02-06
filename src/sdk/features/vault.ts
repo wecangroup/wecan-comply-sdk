@@ -11,10 +11,61 @@ import type {
 import type { FeatureContext } from './BaseFeature';
 import { getPublicKey } from '../../services/key-store';
 import { prepareInlineContent, prepareFileContent, uploadVaultFile } from './vault-content';
-import { processMissingShareableAnswerContent, validate, shareContent } from './vault-sharing';
+import { getAnswerContents, processMissingShareableAnswerContent, validate, shareContent } from './vault-sharing';
 import { createVaultWithForms } from './vault-creation';
 // @ts-ignore
 import { decryptForMyWorkspace, unpadData } from '../../services/encryption.js';
+
+/**
+ * Map raw API answer contents to decrypted VaultAnswer[] (shared by getVaultAnswers and getPushFormAnswerContents)
+ */
+async function decryptAnswerContents(
+    workspaceUuid: WorkspaceUuid,
+    rawResults: any[]
+): Promise<VaultAnswer[]> {
+    return Promise.all(
+        rawResults.map(async (answer: any): Promise<VaultAnswer> => {
+            const contentList = Array.isArray(answer.content) ? answer.content : [answer.content];
+            const content: VaultAnswerContent[] = await Promise.all(
+                contentList.map(async (item: any): Promise<VaultAnswerContent> => {
+                    const entries: VaultAnswerContentEntry[] = await Promise.all(
+                        (item.entries || []).map(async (entry: any): Promise<VaultAnswerContentEntry> => {
+                            let contentDecrypted: string | undefined;
+
+                            if (entry.content_format === 'inline' && entry.content) {
+                                try {
+                                    const decrypted = await decryptForMyWorkspace(workspaceUuid, entry.content, 'text');
+                                    contentDecrypted = entry.content_is_padded ? unpadData(decrypted) : decrypted;
+                                } catch (error) {
+                                    console.error(`Failed to decrypt entry ${entry.uuid}:`, error);
+                                    contentDecrypted = undefined;
+                                }
+                            }
+
+                            return {
+                                uuid: entry.uuid,
+                                content_format: entry.content_format,
+                                content_hash: entry.content_hash,
+                                content_is_padded: entry.content_is_padded,
+                                content: contentDecrypted ?? (entry.content_format === 'file' ? entry.content : ''),
+                            };
+                        })
+                    );
+                    return { uuid: item.uuid, entries };
+                })
+            );
+            return {
+                uuid: answer.uuid,
+                source_uuid: answer.source_uuid,
+                answer_pool_uuid: answer.answer_pool_uuid,
+                item_uuid: answer.item_uuid,
+                version: answer.version,
+                content,
+                min_expiration_date: answer.min_expiration_date,
+            };
+        })
+    );
+}
 
 /**
  * Vault-related API functions
@@ -44,59 +95,23 @@ export class VaultFeature {
         const response = await workspaceClient.get<{ results: any[] }>(
             `/api/forms/answers/contents/?answer_pool_uuid=${vaultId}&is_latest=true`
         );
+        return decryptAnswerContents(workspaceUuid, response.results);
+    }
 
-        // Map and decrypt answers
-        const answers: VaultAnswer[] = await Promise.all(
-            response.results.map(async (answer): Promise<VaultAnswer> => {
-                // Process and decrypt content entries
-                const content: VaultAnswerContent[] = await Promise.all(
-                    answer.content.map(async (item: any): Promise<VaultAnswerContent> => {
-                        const entries: VaultAnswerContentEntry[] = await Promise.all(
-                            item.entries.map(async (entry: any): Promise<VaultAnswerContentEntry> => {
-                                let contentDecrypted: string | undefined;
-
-                                // Decrypt inline content
-                                if (entry.content_format === 'inline' && entry.content) {
-                                    try {
-                                        const content = await decryptForMyWorkspace(workspaceUuid, entry.content, 'text');
-                                        contentDecrypted = entry.content_is_padded ? unpadData(content) : content;
-                                    } catch (error) {
-                                        console.error(`Failed to decrypt entry ${entry.uuid}:`, error);
-                                        contentDecrypted = undefined;
-                                    }
-                                }
-
-                                return {
-                                    uuid: entry.uuid,
-                                    content_format: entry.content_format,
-                                    content_hash: entry.content_hash,
-                                    content_is_padded: entry.content_is_padded,
-                                    // content: entry.content,
-                                    content: contentDecrypted || '',
-                                };
-                            })
-                        );
-
-                        return {
-                            uuid: item.uuid,
-                            entries,
-                        };
-                    })
-                );
-
-                return {
-                    uuid: answer.uuid,
-                    source_uuid: answer.source_uuid,
-                    answer_pool_uuid: answer.answer_pool_uuid,
-                    item_uuid: answer.item_uuid,
-                    version: answer.version,
-                    content,
-                    min_expiration_date: answer.min_expiration_date,
-                };
-            })
-        );
-
-        return answers;
+    /**
+     * Get answer contents for a push form by its UUID (decrypted)
+     * @param workspaceUuid - The UUID of the workspace
+     * @param pushFormUuid - The UUID of the push form
+     * @returns Answer contents (results and count), with inline content decrypted
+     */
+    async getPushFormAnswerContents(
+        workspaceUuid: WorkspaceUuid,
+        pushFormUuid: string
+    ): Promise<{ results: VaultAnswer[]; count: number }> {
+        const workspaceClient = this.context.getWorkspaceClient(workspaceUuid);
+        const response = await getAnswerContents(workspaceClient, { in_push_form_uuid: pushFormUuid });
+        const results = await decryptAnswerContents(workspaceUuid, response.results);
+        return { results, count: response.count };
     }
 
     async lockVault(workspaceUuid: WorkspaceUuid, vaultId: VaultUuid): Promise<void> {

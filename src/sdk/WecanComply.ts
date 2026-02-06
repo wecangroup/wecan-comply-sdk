@@ -57,7 +57,7 @@ export interface WecanComplyOptions {
     defaultHeaders?: HeadersInitLike;
     /** Callback function called when a 401 Unauthorized error occurs */
     onUnauthorized?: (error: Error) => void | Promise<void>;
-    /** Template for workspace URLs, e.g., 'https://{workspaceUuid}.int.wecancomply.ch' */
+    /** Template for workspace URLs, e.g., 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch' */
     workspaceUrlTemplate: string;
     /** Enable debug logging for workspace client requests (default: false) */
     debug?: boolean;
@@ -76,7 +76,7 @@ function joinUrl(baseUrl: string, path: string): string {
  * ```typescript
  * const sdk = await WecanComply.create({
  *   accessToken: 'your-access-token',
- *   workspaceUrlTemplate: 'https://{workspaceUuid}.int.wecancomply.ch',
+ *   workspaceUrlTemplate: 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch',
  *   workspaceKeys: [{
  *     workspaceUuid: 'workspace-uuid',
  *     privateKey: '-----BEGIN PGP PRIVATE KEY BLOCK-----...'
@@ -146,7 +146,7 @@ export class WecanComply {
      * ```typescript
      * const sdk = await WecanComply.create({
      *   accessToken: 'your-access-token',
-     *   workspaceUrlTemplate: 'https://{workspaceUuid}.int.wecancomply.ch',
+     *   workspaceUrlTemplate: 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch',
      *   workspaceKeys: [{
      *     workspaceUuid: 'workspace-uuid',
      *     privateKey: '-----BEGIN PGP PRIVATE KEY BLOCK-----...'
@@ -224,7 +224,7 @@ export class WecanComply {
                     throw new Error(`Failed to get workspace public key for workspace ${workspaceUuid}`);
                 }
 
-                // Store both public and private keys
+                // Store both public and private keys (private key is normalized in key-store)
                 setWorkspaceKeys(workspaceUuid, {
                     public: workspaceDetails.public_key,
                     private: privateKey,
@@ -370,6 +370,19 @@ export class WecanComply {
     }
 
     /**
+     * Get answer contents for a push form by its UUID (decrypted)
+     * @param workspaceUuid - The UUID of the workspace
+     * @param pushFormUuid - The UUID of the push form
+     * @returns Answer contents (results and count), with inline content decrypted
+     */
+    async getPushFormAnswerContents(
+        workspaceUuid: WorkspaceUuid,
+        pushFormUuid: string
+    ): Promise<{ results: VaultAnswer[]; count: number }> {
+        return this.vault.getPushFormAnswerContents(workspaceUuid, pushFormUuid);
+    }
+
+    /**
      * Download and decrypt a file from a vault
      * @param workspaceUuid - The UUID of the workspace
      * @param fileUuid - The UUID of the file to download
@@ -486,14 +499,21 @@ export class WecanComply {
      * @param workspaceUuid - The UUID of the workspace
      * @param pushTemplateUuid - The UUID of the push template
      * @param status - Optional status for the external form request
+     * @param informationText - Optional text displayed to the user when filling the form
      * @returns The created external form request
      */
     async createExternalFormRequest(
         workspaceUuid: WorkspaceUuid,
         pushTemplateUuid: string,
-        status?: ExternalFormRequestStatus
+        status?: ExternalFormRequestStatus,
+        informationText?: string | null
     ): Promise<ExternalFormRequest> {
-        return this.externalFormRequest.createExternalFormRequest(workspaceUuid, pushTemplateUuid, status);
+        return this.externalFormRequest.createExternalFormRequest(
+            workspaceUuid,
+            pushTemplateUuid,
+            status,
+            informationText
+        );
     }
 
     /**

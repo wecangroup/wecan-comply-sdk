@@ -1,4 +1,5 @@
 import type { WorkspacePrivateKey, WorkspacePublicKey, WorkspaceUuid } from '../types';
+import { normalizePgpPrivateKey } from '../utils/pgp-key';
 
 export interface WorkspaceKeys {
     public?: WorkspacePublicKey;
@@ -9,9 +10,10 @@ const workspacesKeys: Record<WorkspaceUuid, WorkspaceKeys> = Object.create(null)
 
 export function setWorkspaceKeys(workspaceUuid: WorkspaceUuid, keys: WorkspaceKeys): void {
     if (!workspaceUuid) throw new Error('workspaceUuid is required');
+    const privateKey = keys.private != null ? normalizePgpPrivateKey(keys.private) : workspacesKeys[workspaceUuid]?.private;
     workspacesKeys[workspaceUuid] = {
         public: keys.public ?? workspacesKeys[workspaceUuid]?.public,
-        private: keys.private ?? workspacesKeys[workspaceUuid]?.private,
+        private: privateKey,
     };
 }
 
@@ -24,7 +26,7 @@ export function setWorkspacePublicKey(workspaceUuid: WorkspaceUuid, publicKey: W
 export function setWorkspacePrivateKey(workspaceUuid: WorkspaceUuid, privateKey: WorkspacePrivateKey): void {
     if (!workspaceUuid) throw new Error('workspaceUuid is required');
     workspacesKeys[workspaceUuid] = workspacesKeys[workspaceUuid] || {};
-    workspacesKeys[workspaceUuid].private = privateKey;
+    workspacesKeys[workspaceUuid].private = normalizePgpPrivateKey(privateKey);
 }
 
 export function getWorkspaceKeys(workspaceUuid: WorkspaceUuid): WorkspaceKeys {

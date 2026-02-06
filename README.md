@@ -45,7 +45,7 @@ const client = await WecanComply.create({
 -----END PGP PRIVATE KEY BLOCK-----`
     }
   ],
-  workspaceUrlTemplate: 'https://{workspaceUuid}.int.wecancomply.ch',
+  workspaceUrlTemplate: 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch',
   debug: true // Optional: enable logging of workspace API calls
 });
 ```
@@ -244,7 +244,7 @@ interface WecanComplyOptions {
   accessToken: string;
   /** List of workspace private keys to load (optional, needed for encryption/decryption) */
   workspaceKeys?: WorkspaceKeyConfig[];
-  /** Template for workspace-specific URLs, e.g., 'https://{workspaceUuid}.int.wecancomply.ch' */
+  /** Template for workspace-specific URLs, e.g., 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch' */
   workspaceUrlTemplate: string;
   /** Request timeout in milliseconds (default: 30000) */
   timeoutMs?: number;
@@ -274,7 +274,7 @@ The SDK provides an `onUnauthorized` callback for handling 401 errors:
 ```ts
 const client = await WecanComply.create({
   accessToken: 'your-access-token-here',
-  workspaceUrlTemplate: 'https://{workspaceUuid}.int.wecancomply.ch',
+  workspaceUrlTemplate: 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch',
   onUnauthorized: async (error) => {
     console.error('Unauthorized access:', error);
     // Handle token refresh or re-authentication here
