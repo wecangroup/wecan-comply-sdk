@@ -20,23 +20,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'  # Node.js 20+ required for npm 11.5.1+ (Trusted Publisher support)
+          node-version: '24'  # Node 24+ for npm 11.5.1+ (required by Trusted Publishers)
           registry-url: 'https://registry.npmjs.org'
-      
-      - name: Verify npm version
-        run: |
-          npm --version
-          # npm 11.5.1+ is required for Trusted Publisher support
-          # This is automatically satisfied with Node.js 20+
-      
-      - name: Configure npm for OIDC authentication
-        run: |
-          # Configure npm to use OIDC authentication for Trusted Publishers
-          # This is required for npm 11.5.1+ with Trusted Publishers
-          npm config set registry https://registry.npmjs.org/
-          # npm will automatically use OIDC when publishing if Trusted Publisher is configured
-          echo "✅ npm configured for OIDC authentication"
-      
+
+      # Authentication: npm CLI uses OIDC automatically when id-token: write is set.
+      # Configure Trusted Publisher on npmjs.com (package Settings → Trusted Publisher).
+
       - name: Install dependencies
         run: npm ci
       
@@ -57,55 +46,7 @@ jobs:
           fi
           echo "✅ Version match: $PACKAGE_VERSION"
       
-      - name: Check if package exists on npm
-        id: check_package
-        run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          if npm view "$PACKAGE_NAME" version 2>/dev/null; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "✅ Package exists on npm"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "⚠️  Package does not exist on npm"
-            echo "⚠️  First publication must be done manually to create the package"
-            echo "⚠️  After that, Trusted Publisher can publish updates automatically"
-          fi
-        continue-on-error: true
-      
-      - name: Verify package name and version
-        run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          echo "📦 Package: $PACKAGE_NAME"
-          echo "📌 Version: $PACKAGE_VERSION"
-          echo "🔍 Checking if package exists on npm..."
-          CURRENT_VERSION=$(npm view "$PACKAGE_NAME" version 2>/dev/null || echo "not found")
-          echo "Current version on npm: $CURRENT_VERSION"
-      
-      - name: Check npm authentication
-        run: |
-          echo "🔐 Checking npm authentication..."
-          echo "Registry: $(npm config get registry)"
-          echo "OIDC token available: $([ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ] && echo 'Yes' || echo 'No')"
-          echo ""
-          echo "ℹ️  Note: 'npm whoami' may fail with OIDC, but publishing should still work"
-          echo "ℹ️  Trusted Publishers authenticate automatically during publish"
-      
-      - name: Check package access
-        run: |
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          echo "🔍 Checking package access..."
-          npm access ls-packages 2>&1 | head -20 || echo "Cannot list packages (may need manual authentication)"
-          echo ""
-          echo "Trying to view package details..."
-          npm view "$PACKAGE_NAME" --json 2>&1 | head -10 || echo "Cannot view package"
-      
       - name: Publish to npm
         run: npm publish --access public
-        # Uses OIDC authentication via npm Trusted Publisher (no token needed)
-        # If this fails with 404, possible causes:
-        # 1. Trusted Publisher not configured correctly (repository name, workflow path)
-        # 2. Trusted Publisher doesn't have publish permissions for this package
-        # 3. Package was created with a different npm account
-        # 4. OIDC authentication not working properly
+        # Trusted Publisher (OIDC): no token needed when configured on npmjs.com
 
