@@ -133,6 +133,7 @@ async function main() {
   const meta = metadata as unknown as Record<string, unknown>;
   const firstItemUuid = getFirstItemUuid(meta);
   const firstEntryUuid = getFirstEntryUuid(meta);
+  let submitted = false;
   if (shouldSubmit && metadata.push_template && firstItemUuid && firstEntryUuid) {
     console.log('\n--- Submit answers (example) ---');
     const answers = [
@@ -149,6 +150,7 @@ async function main() {
     ];
     await sdk.submitExternalFormRequest(workspaceUuid, requestUuid, answers);
     console.log('Submitted answers (example payload).');
+    submitted = true;
   } else if (!shouldSubmit) {
     console.log(
       '\nTo submit example answers, set SUBMIT_ANSWERS=1 (and ensure placeholder/entry UUIDs match your template).'
@@ -156,26 +158,29 @@ async function main() {
   }
   // ------------------------------------------------------------------------------------------------
 
-  // --- 5. Get external form request (retrieve full details after submit) ---
-  console.log('\n--- Get external form request ---');
-  const request = await sdk.getExternalFormRequest(workspaceUuid, requestUuid);
-  console.log(
-    `Request: ${request.uuid} | status: ${request.status} | submissions: ${request.submission_count} | url: ${request.url}`
-  );
-  console.log('Push forms:', JSON.stringify(request.push_forms, null, 2));
-
-  // --- 6. Get answers of the first push form ---
-  const firstPushForm = request.push_forms?.[0];
-  if (firstPushForm) {
-    console.log('\n--- Get answers (first push form) ---');
-    const answersResponse = await sdk.getPushFormAnswerContents(workspaceUuid, firstPushForm.uuid);
-    console.log(`Count: ${answersResponse.count}`);
-    const answersWithEntries = answersResponse.results.filter(
-      (r: { content?: Array<{ entries?: unknown[] }> }) =>
-        r.content?.some((c) => Array.isArray(c.entries) && c.entries.length > 0)
+  // --- 5 & 6. Only after submit: get request details and push form answers ---
+  if (submitted) {
+    // --- 5. Get external form request (retrieve full details after submit) ---
+    console.log('\n--- Get external form request ---');
+    const request = await sdk.getExternalFormRequest(workspaceUuid, requestUuid);
+    console.log(
+      `Request: ${request.uuid} | status: ${request.status} | submissions: ${request.submission_count} | url: ${request.url}`
     );
-    if (answersWithEntries.length > 0) {
-      console.log('Answers:', JSON.stringify(answersWithEntries, null, 2));
+    console.log('Push forms:', JSON.stringify(request.push_forms, null, 2));
+
+    // --- 6. Get answers of the first push form ---
+    const firstPushForm = request.push_forms?.[0];
+    if (firstPushForm) {
+      console.log('\n--- Get answers (first push form) ---');
+      const answersResponse = await sdk.getPushFormAnswerContents(workspaceUuid, firstPushForm.uuid);
+      console.log(`Count: ${answersResponse.count}`);
+      const answersWithEntries = answersResponse.results.filter(
+        (r: { content?: Array<{ entries?: unknown[] }> }) =>
+          r.content?.some((c) => Array.isArray(c.entries) && c.entries.length > 0)
+      );
+      if (answersWithEntries.length > 0) {
+        console.log('Answers:', JSON.stringify(answersWithEntries, null, 2));
+      }
     }
   }
 
