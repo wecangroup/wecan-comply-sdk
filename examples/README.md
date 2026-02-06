@@ -36,7 +36,7 @@ ACCESS_TOKEN=... WORKSPACE_UUID=... WORKSPACE_URL_TEMPLATE='...' npm run example
 | `WORKSPACE_UUID` | Workspace UUID (required) |
 | `WORKSPACE_URL_TEMPLATE` | URL template, e.g. `https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch` (required) |
 | `PUSH_TEMPLATE_UUID` | Push template UUID; if set, a new external form request is created |
-| `SUBMIT_ANSWERS` | Set to `1` to submit example answers (adapt UUIDs to your template) |
+| `SUBMIT_ANSWERS` | Submit is **on by default**. Set to `0` or `false` to disable |
 | `DEBUG` | Set to `1` to log workspace API requests |
 | `WORKSPACE_PRIVATE_KEY` | PGP private key of the workspace (for decrypting answers in step 6) |
 | `WORKSPACE_PRIVATE_KEY_PATH` | Path to a file containing the workspace PGP private key (alternative to `WORKSPACE_PRIVATE_KEY`) |

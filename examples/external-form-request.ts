@@ -5,7 +5,7 @@
  * (Uses source code; no need to build first.)
  *
  * Required env: ACCESS_TOKEN, WORKSPACE_UUID, WORKSPACE_URL_TEMPLATE
- * Optional: PUSH_TEMPLATE_UUID, SUBMIT_ANSWERS=1, DEBUG=1
+ * Optional: PUSH_TEMPLATE_UUID, SUBMIT_ANSWERS=0 to disable, DEBUG=1
  * For decryption (e.g. getPushFormAnswerContents): WORKSPACE_PRIVATE_KEY or WORKSPACE_PRIVATE_KEY_PATH
  */
 import fs from 'fs';
@@ -129,7 +129,7 @@ async function main() {
   }
   
   // --- 4. Submit answers (use first item/entry from metadata) ---
-  const shouldSubmit = process.env.SUBMIT_ANSWERS === '1';
+  const shouldSubmit = process.env.SUBMIT_ANSWERS !== '0' && process.env.SUBMIT_ANSWERS?.toLowerCase() !== 'false';
   const meta = metadata as unknown as Record<string, unknown>;
   const firstItemUuid = getFirstItemUuid(meta);
   const firstEntryUuid = getFirstEntryUuid(meta);
@@ -153,7 +153,7 @@ async function main() {
     submitted = true;
   } else if (!shouldSubmit) {
     console.log(
-      '\nTo submit example answers, set SUBMIT_ANSWERS=1 (and ensure placeholder/entry UUIDs match your template).'
+      '\nSubmit is disabled (SUBMIT_ANSWERS=0). Set SUBMIT_ANSWERS=1 or leave unset to submit, and ensure placeholder/entry UUIDs match your template.'
     );
   }
   // ------------------------------------------------------------------------------------------------
