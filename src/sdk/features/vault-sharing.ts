@@ -1,5 +1,5 @@
-import type { WorkspaceUuid } from '../../types';
-import type { WorkspaceClient } from './BaseFeature';
+import type { WorkspaceUuid } from '../../types/index.js';
+import type { WorkspaceClient } from './BaseFeature.js';
 // @ts-ignore
 import { decryptForMyWorkspace, encryptForKeys } from '../../services/encryption.js';
 

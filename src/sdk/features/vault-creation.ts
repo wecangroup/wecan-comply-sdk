@@ -1,5 +1,5 @@
-import type { WorkspaceUuid, VaultUuid, Vault, PushCategory } from '../../types';
-import type { WorkspaceClient } from './BaseFeature';
+import type { WorkspaceUuid, VaultUuid, Vault, PushCategory } from '../../types/index.js';
+import type { WorkspaceClient } from './BaseFeature.js';
 
 /**
  * Get instanciable forms for push templates

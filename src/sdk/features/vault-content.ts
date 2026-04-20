@@ -1,8 +1,8 @@
-import type { VaultAnswerContentEntry, WorkspaceUuid } from '../../types';
-import type { WorkspaceClient } from './BaseFeature';
+import type { VaultAnswerContentEntry, WorkspaceUuid } from '../../types/index.js';
+import type { WorkspaceClient } from './BaseFeature.js';
 // @ts-ignore
 import { hashData, encryptForKeys, padData } from '../../services/encryption.js';
-import { getPublicKey } from '../../services/key-store';
+import { getPublicKey } from '../../services/key-store.js';
 
 /**
  * Prepare inline content for API submission by padding, hashing, and encrypting

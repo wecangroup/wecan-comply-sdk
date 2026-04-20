@@ -1,7 +1,7 @@
-import { HttpClientLike as HttpClient, HttpMethod, HeadersInitLike } from '../http/HttpClient';
+import { HttpClientLike as HttpClient, HttpMethod, HeadersInitLike } from '../http/HttpClient.js';
 import axios from 'axios';
 import type { AxiosError } from 'axios';
-import { createAxiosHttpClient } from '../http/axiosAdapter';
+import { createAxiosHttpClient } from '../http/axiosAdapter.js';
 import axiosRetry from 'axios-retry';
 import type { 
     WorkspaceUuid, 
@@ -22,12 +22,12 @@ import type {
     ExternalFormFileUploadResponse,
     ExternalFormRequestMetadata,
     ExternalFormRequestListOptions,
-    PaginatedExternalFormRequestList } from '../types';
-import { setWorkspaceKeys } from '../services/key-store';
-import { WorkspaceFeature } from './features/workspace';
-import { VaultFeature } from './features/vault';
-import { ExternalFormRequestFeature } from './features/external-form-request';
-import type { FeatureContext, WorkspaceClient } from './features/BaseFeature';
+    PaginatedExternalFormRequestList } from '../types/index.js';
+import { setWorkspaceKeys } from '../services/key-store.js';
+import { WorkspaceFeature } from './features/workspace.js';
+import { VaultFeature } from './features/vault.js';
+import { ExternalFormRequestFeature } from './features/external-form-request.js';
+import type { FeatureContext, WorkspaceClient } from './features/BaseFeature.js';
 
 /**
  * Configuration for workspace keys (public and private)

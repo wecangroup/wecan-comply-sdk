@@ -1,8 +1,8 @@
-export * from './http/HttpClient';
-export * from './sdk/WecanComply';
-export * from './http/axiosAdapter';
-export * from './services/key-store';
-export * from './types';
+export * from './http/HttpClient.js';
+export * from './sdk/WecanComply.js';
+export * from './http/axiosAdapter.js';
+export * from './services/key-store.js';
+export * from './types/index.js';
 
 // Export types for convenience
-export type { WecanComplyOptions, WorkspaceKeyConfig } from './sdk/WecanComply';
+export type { WecanComplyOptions, WorkspaceKeyConfig } from './sdk/WecanComply.js';

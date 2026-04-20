@@ -8,8 +8,8 @@ import type {
     ExternalFormRequestMetadata,
     PaginatedExternalFormRequestList,
     ExternalFormRequestListOptions
-} from '../../types';
-import type { FeatureContext } from './BaseFeature';
+} from '../../types/index.js';
+import type { FeatureContext } from './BaseFeature.js';
 
 /**
  * External Form Request-related API functions
