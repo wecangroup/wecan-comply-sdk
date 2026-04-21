@@ -1,5 +1,5 @@
-import type { WorkspacePrivateKey, WorkspacePublicKey, WorkspaceUuid } from '../types';
-import { normalizePgpPrivateKey } from '../utils/pgp-key';
+import type { WorkspacePrivateKey, WorkspacePublicKey, WorkspaceUuid } from '../types/index.js';
+import { normalizePgpPrivateKey } from '../utils/pgp-key.js';
 
 export interface WorkspaceKeys {
     public?: WorkspacePublicKey;

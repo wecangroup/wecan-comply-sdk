@@ -1,5 +1,5 @@
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { HeadersInitLike, HttpClientLike, HttpRequest, HttpResponse, HttpError } from './HttpClient';
+import { HeadersInitLike, HttpClientLike, HttpRequest, HttpResponse, HttpError } from './HttpClient.js';
 
 function normalizeHeaders(headers: any): HeadersInitLike {
     const out: HeadersInitLike = {};

@@ -1,5 +1,5 @@
-import type { WorkspaceUuid, WorkspaceDetails, BusinessType, Relation, NetworkEntry } from '../../types';
-import type { FeatureContext } from './BaseFeature';
+import type { WorkspaceUuid, WorkspaceDetails, BusinessType, Relation, NetworkEntry } from '../../types/index.js';
+import type { FeatureContext } from './BaseFeature.js';
 
 /**
  * Workspace-related API functions

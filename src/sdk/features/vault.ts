@@ -7,12 +7,12 @@ import type {
     VaultAnswerContentEntry,
     PushCategory,
     VaultPlaceholder
-} from '../../types';
-import type { FeatureContext } from './BaseFeature';
-import { getPublicKey } from '../../services/key-store';
-import { prepareInlineContent, prepareFileContent, uploadVaultFile } from './vault-content';
-import { getAnswerContents, processMissingShareableAnswerContent, validate, shareContent } from './vault-sharing';
-import { createVaultWithForms } from './vault-creation';
+} from '../../types/index.js';
+import type { FeatureContext } from './BaseFeature.js';
+import { getPublicKey } from '../../services/key-store.js';
+import { prepareInlineContent, prepareFileContent, uploadVaultFile } from './vault-content.js';
+import { getAnswerContents, processMissingShareableAnswerContent, validate, shareContent } from './vault-sharing.js';
+import { createVaultWithForms } from './vault-creation.js';
 // @ts-ignore
 import { decryptForMyWorkspace, unpadData } from '../../services/encryption.js';
 
