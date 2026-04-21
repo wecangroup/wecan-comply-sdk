@@ -1,6 +1,6 @@
 import stringify from 'json-stable-stringify';
 import { createMessage, decrypt, encrypt, readKey, readMessage } from 'openpgp';
-import { getWorkspaceKeys } from './key-store';
+import { getWorkspaceKeys } from './key-store.js';
 
 // Get crypto API that works in both browser and Node.js
 function getCrypto() {
