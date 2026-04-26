@@ -1,7 +1,6 @@
 import type { WorkspaceUuid } from '../../types/index.js';
 import type { WorkspaceClient } from './BaseFeature.js';
-// @ts-ignore
-import { decryptForMyWorkspace, encryptForKeys } from '../../services/encryption.js';
+import { decryptForMyWorkspace, encryptForKeys, toArrayBuffer } from '../../services/encryption.js';
 
 /**
  * Get answer contents from API with query parameters
@@ -92,7 +91,7 @@ export async function createShareablePayload(
                 const formData = new FormData();
                 formData.append(
                     'file',
-                    new File([reencryptedContent], content.file_name, {
+                    new File([toArrayBuffer(reencryptedContent)], content.file_name, {
                         type: content.file_mimetype,
                     }),
                 );

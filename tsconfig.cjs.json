@@ -2,13 +2,12 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "CommonJS",
-    "outDir": "dist",
+    "outDir": "dist/cjs",
     "declaration": false,
     "declarationMap": false,
     "sourceMap": false,
     "removeComments": true
   },
-  "include": ["src/index.cjs.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/index.cjs.ts"]
 }
-
-

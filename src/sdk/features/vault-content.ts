@@ -1,7 +1,6 @@
 import type { VaultAnswerContentEntry, WorkspaceUuid } from '../../types/index.js';
 import type { WorkspaceClient } from './BaseFeature.js';
-// @ts-ignore
-import { hashData, encryptForKeys, padData } from '../../services/encryption.js';
+import { hashData, encryptForKeys, padData, toArrayBuffer } from '../../services/encryption.js';
 import { getPublicKey } from '../../services/key-store.js';
 
 /**
@@ -53,8 +52,12 @@ export async function prepareFileContent(
 }> {
     const fileContent = entry.new_content as File;
     const binary = new Uint8Array(await fileContent.arrayBuffer());
-    const encryptedContent = await encryptForKeys([getPublicKey(workspaceUuid)], binary, 'binary');
-    const encryptedFile = new Blob([encryptedContent]);
+    const workspacePublicKey = getPublicKey(workspaceUuid);
+    if (!workspacePublicKey) {
+        throw new Error(`Workspace public key not found for workspace ${workspaceUuid}`);
+    }
+    const encryptedContent = await encryptForKeys([workspacePublicKey], binary, 'binary');
+    const encryptedFile = new Blob([toArrayBuffer(encryptedContent)]);
 
     const formData = new FormData();
     formData.append('file', encryptedFile);
@@ -80,4 +83,3 @@ export async function uploadVaultFile(workspaceClient: WorkspaceClient, formData
     const fileUuid = (response as { uuid: string }).uuid;
     return { uuid: fileUuid };
 }
-
