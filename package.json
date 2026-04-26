@@ -9,13 +9,13 @@
     "url": "https://github.com/wecangroup/wecan-comply-sdk"
   },
   "type": "module",
-  "main": "dist/index.cjs",
+  "main": "dist/cjs/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
+      "require": "./dist/cjs/index.js",
       "types": "./dist/index.d.ts"
     }
   },
@@ -42,7 +42,7 @@
   ],
   "scripts": {
     "clean": "rimraf dist",
-    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json && node -e \"const fs=require('fs'); if(fs.existsSync('dist/index.cjs.js')){fs.renameSync('dist/index.cjs.js','dist/index.cjs');}\"",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json && node scripts/write-cjs-package.cjs",
     "prepare": "npm run build",
     "prepublishOnly": "npm run clean && npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
