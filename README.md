@@ -45,14 +45,15 @@ const client = await WecanComply.create({
 -----END PGP PRIVATE KEY BLOCK-----`
     }
   ],
-  workspaceUrlTemplate: 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch',
+  environment: 'int', // 'dev' | 'int' | 'prod'
   debug: true // Optional: enable logging of workspace API calls
 });
 ```
 
 **Important Notes**:
 - When you provide `workspaceKeys`, the SDK automatically fetches the corresponding public keys from the API and stores both keys for encryption/decryption operations
-- The `workspaceUrlTemplate` must include `{workspaceUuid}` as a placeholder, which will be replaced with the actual workspace UUID
+- Set `environment` to target the Wecan Comply deployment (`dev`, `int`, or `prod`). Do not set `environment` and `workspaceUrlTemplate` together — the SDK throws a clear error if both are provided
+- For custom or legacy setups, use `workspaceUrlTemplate` alone instead of `environment`. The template must include `{workspaceUuid}` as a placeholder, which will be replaced with the actual workspace UUID
 - Enable `debug: true` to see all workspace API calls logged to the console (useful for development)
 
 ### Workspace Operations
@@ -239,13 +240,13 @@ interface WorkspaceKeyConfig {
   privateKey: string;
 }
 
-interface WecanComplyOptions {
+type ComplyEnvironment = 'dev' | 'int' | 'prod';
+
+type WecanComplyOptions = {
   /** Access token for authentication (required) */
   accessToken: string;
   /** List of workspace private keys to load (optional, needed for encryption/decryption) */
   workspaceKeys?: WorkspaceKeyConfig[];
-  /** Template for workspace-specific URLs, e.g., 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch' */
-  workspaceUrlTemplate: string;
   /** Request timeout in milliseconds (default: 30000) */
   timeoutMs?: number;
   /** Number of retry attempts (default: 2) */
@@ -258,8 +259,26 @@ interface WecanComplyOptions {
   onUnauthorized?: (error: Error) => void | Promise<void>;
   /** Enable debug logging for workspace client requests (default: false) */
   debug?: boolean;
-}
+} & (
+  | {
+      /** Wecan Comply deployment environment (recommended) */
+      environment: ComplyEnvironment;
+    }
+  | {
+      /**
+       * Template for workspace-specific URLs (legacy / custom).
+       * Must include `{workspaceUuid}`. Do not combine with `environment`.
+       */
+      workspaceUrlTemplate: string;
+    }
+);
 ```
+
+**Workspace URL configuration**:
+- Provide **either** `environment` (`dev`, `int`, `prod`) **or** `workspaceUrlTemplate`, not both
+- `dev` → `https://{workspaceUuid}.workspaces.dev.wecancomply.arcanite.ch`
+- `int` → `https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch`
+- `prod` → `https://{workspaceUuid}.workspaces.wecancomply.arcanite.ch`
 
 **Authentication Notes**:
 - `accessToken` is required for all operations
@@ -274,7 +293,7 @@ The SDK provides an `onUnauthorized` callback for handling 401 errors:
 ```ts
 const client = await WecanComply.create({
   accessToken: 'your-access-token-here',
-  workspaceUrlTemplate: 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch',
+  environment: 'prod',
   onUnauthorized: async (error) => {
     console.error('Unauthorized access:', error);
     // Handle token refresh or re-authentication here
@@ -328,6 +347,7 @@ import type {
   // Configuration
   WecanComplyOptions,
   WorkspaceKeyConfig,
+  ComplyEnvironment,
   
   // Identifiers
   WorkspaceUuid,
