@@ -13,8 +13,7 @@ import { getPublicKey } from '../../services/key-store.js';
 import { prepareInlineContent, prepareFileContent, uploadVaultFile } from './vault-content.js';
 import { getAnswerContents, processMissingShareableAnswerContent, validate, shareContent } from './vault-sharing.js';
 import { createVaultWithForms } from './vault-creation.js';
-// @ts-ignore
-import { decryptForMyWorkspace, unpadData } from '../../services/encryption.js';
+import { decryptForMyWorkspace, toArrayBuffer, unpadData } from '../../services/encryption.js';
 
 /**
  * Map raw API answer contents to decrypted VaultAnswer[] (shared by getVaultAnswers and getPushFormAnswerContents)
@@ -189,7 +188,7 @@ export class VaultFeature {
         const encryptedFileContent = await workspaceClient.get<string>(`/api/forms/answers/contents/files/${fileUuid}`);
         try {
             const data = await decryptForMyWorkspace(workspaceUuid, encryptedFileContent, 'binary');
-            return new Blob([data], { type: fileMimetype });
+            return new Blob([toArrayBuffer(data)], { type: fileMimetype });
         } catch (error) {
             console.error(`Failed to decrypt file ${fileUuid}:`, error);
             throw error;

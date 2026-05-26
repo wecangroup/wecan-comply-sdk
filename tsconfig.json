@@ -20,5 +20,3 @@
   "include": ["src/**/*", "examples/**/*"],
   "exclude": ["dist", "node_modules", "examples"]
 }
-
-
