@@ -181,21 +181,24 @@ export class WecanComply {
     static async create(options: WecanComplyOptions): Promise<WecanComply> {
         const retries = options.retries ?? 2;
 
-        const axiosInstance = axios.create();
-        axiosRetry(axiosInstance, {
-            retries,
-            retryDelay: axiosRetry.exponentialDelay,
-            retryCondition: (error: AxiosError) => {
-                const status = error.response?.status;
-                if (!status) return true;
-                return status === 408 || status === 429 || (status >= 500 && status < 600);
-            },
-        });
+        let http = options.http;
+        if (!http) {
+            const axiosInstance = axios.create();
+            axiosRetry(axiosInstance, {
+                retries,
+                retryDelay: axiosRetry.exponentialDelay,
+                retryCondition: (error: AxiosError) => {
+                    const status = error.response?.status;
+                    if (!status) return true;
+                    return status === 408 || status === 429 || (status >= 500 && status < 600);
+                },
+            });
+            http = createAxiosHttpClient(axiosInstance);
+        }
 
-        // Build instance using the axios instance (with retries)
         const instance = new WecanComply({
             ...options,
-            http: createAxiosHttpClient(axiosInstance),
+            http,
         });
 
         // Load workspace keys if provided
