@@ -46,6 +46,7 @@
     "prepare": "npm run build",
     "prepublishOnly": "npm run clean && npm run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
     "example": "tsx examples/external-form-request.ts",
     "example:external-form-request": "tsx examples/external-form-request.ts"
   },

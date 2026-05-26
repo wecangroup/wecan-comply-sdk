@@ -28,6 +28,10 @@ import { WorkspaceFeature } from './features/workspace.js';
 import { VaultFeature } from './features/vault.js';
 import { ExternalFormRequestFeature } from './features/external-form-request.js';
 import type { FeatureContext, WorkspaceClient } from './features/BaseFeature.js';
+import type { ComplyEnvironment } from './workspace-environment.js';
+import { resolveWorkspaceUrlTemplate } from './workspace-environment.js';
+
+export type { ComplyEnvironment } from './workspace-environment.js';
 
 /**
  * Configuration for workspace keys (public and private)
@@ -39,10 +43,7 @@ export interface WorkspaceKeyConfig {
     privateKey: WorkspacePrivateKey;
 }
 
-/**
- * Options for creating a WecanComply SDK instance
- */
-export interface WecanComplyOptions {
+type WecanComplyOptionsBase = {
     /** Access token for authentication */
     accessToken: string;
     /** List of workspace private keys to load */
@@ -57,11 +58,33 @@ export interface WecanComplyOptions {
     defaultHeaders?: HeadersInitLike;
     /** Callback function called when a 401 Unauthorized error occurs */
     onUnauthorized?: (error: Error) => void | Promise<void>;
-    /** Template for workspace URLs, e.g., 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch' */
-    workspaceUrlTemplate: string;
     /** Enable debug logging for workspace client requests (default: false) */
     debug?: boolean;
-}
+};
+
+/**
+ * Options for creating a WecanComply SDK instance.
+ * Provide either `environment` (recommended) or `workspaceUrlTemplate`, not both.
+ */
+export type WecanComplyOptions = WecanComplyOptionsBase & (
+    | {
+          /**
+           * Wecan Comply deployment environment (recommended).
+           * Resolves to the matching workspace URL template for dev, int, or prod.
+           */
+          environment: ComplyEnvironment;
+          workspaceUrlTemplate?: never;
+      }
+    | {
+          /**
+           * Template for workspace URLs (legacy / custom).
+           * Must include `{workspaceUuid}` as a placeholder.
+           * @example 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch'
+           */
+          workspaceUrlTemplate: string;
+          environment?: never;
+      }
+);
 
 function joinUrl(baseUrl: string, path: string): string {
     const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
@@ -76,7 +99,7 @@ function joinUrl(baseUrl: string, path: string): string {
  * ```typescript
  * const sdk = await WecanComply.create({
  *   accessToken: 'your-access-token',
- *   workspaceUrlTemplate: 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch',
+ *   environment: 'int',
  *   workspaceKeys: [{
  *     workspaceUuid: 'workspace-uuid',
  *     privateKey: '-----BEGIN PGP PRIVATE KEY BLOCK-----...'
@@ -105,7 +128,7 @@ export class WecanComply {
         this.accessToken = options.accessToken;
         this.timeoutMs = options.timeoutMs ?? 30_000;
         this.retries = options.retries ?? 2;
-        this.workspaceUrlTemplate = options.workspaceUrlTemplate;
+        this.workspaceUrlTemplate = resolveWorkspaceUrlTemplate(options);
         this.debug = options.debug ?? false;
         
         if (options.http) {
@@ -146,7 +169,7 @@ export class WecanComply {
      * ```typescript
      * const sdk = await WecanComply.create({
      *   accessToken: 'your-access-token',
-     *   workspaceUrlTemplate: 'https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch',
+     *   environment: 'int',
      *   workspaceKeys: [{
      *     workspaceUuid: 'workspace-uuid',
      *     privateKey: '-----BEGIN PGP PRIVATE KEY BLOCK-----...'
@@ -158,21 +181,24 @@ export class WecanComply {
     static async create(options: WecanComplyOptions): Promise<WecanComply> {
         const retries = options.retries ?? 2;
 
-        const axiosInstance = axios.create();
-        axiosRetry(axiosInstance, {
-            retries,
-            retryDelay: axiosRetry.exponentialDelay,
-            retryCondition: (error: AxiosError) => {
-                const status = error.response?.status;
-                if (!status) return true;
-                return status === 408 || status === 429 || (status >= 500 && status < 600);
-            },
-        });
+        let http = options.http;
+        if (!http) {
+            const axiosInstance = axios.create();
+            axiosRetry(axiosInstance, {
+                retries,
+                retryDelay: axiosRetry.exponentialDelay,
+                retryCondition: (error: AxiosError) => {
+                    const status = error.response?.status;
+                    if (!status) return true;
+                    return status === 408 || status === 429 || (status >= 500 && status < 600);
+                },
+            });
+            http = createAxiosHttpClient(axiosInstance);
+        }
 
-        // Build instance using the axios instance (with retries)
         const instance = new WecanComply({
             ...options,
-            http: createAxiosHttpClient(axiosInstance),
+            http,
         });
 
         // Load workspace keys if provided

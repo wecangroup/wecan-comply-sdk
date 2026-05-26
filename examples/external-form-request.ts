@@ -4,14 +4,17 @@
  * Run from repo root: npx tsx examples/external-form-request.ts
  * (Uses source code; no need to build first.)
  *
- * Required env: ACCESS_TOKEN, WORKSPACE_UUID, WORKSPACE_URL_TEMPLATE
+ * Required env: ACCESS_TOKEN, WORKSPACE_UUID
+ * Workspace URL: COMPLY_ENVIRONMENT (dev | int | prod, default int) OR WORKSPACE_URL_TEMPLATE (legacy)
  * Optional: PUSH_TEMPLATE_UUID, SUBMIT_ANSWERS=0 to disable, DEBUG=1
  * For decryption (e.g. getPushFormAnswerContents): WORKSPACE_PRIVATE_KEY or WORKSPACE_PRIVATE_KEY_PATH
  */
 import fs from 'fs';
-import { WecanComply } from '../src/index.js';
+import { WecanComply, type ComplyEnvironment } from '../src/index.js';
 
 type ItemEntry = { item?: { uuid?: string; entries?: Array<{ uuid?: string; field_type?: string }> } };
+
+const COMPLY_ENVIRONMENTS: ComplyEnvironment[] = ['dev', 'int', 'prod'];
 
 /** First item/entry with field_type "text" from metadata */
 function getFirstTextItemAndEntry(metadata: Record<string, unknown>): { itemUuid: string; entryUuid: string } | undefined {
@@ -33,7 +36,8 @@ function getFirstTextItemAndEntry(metadata: Record<string, unknown>): { itemUuid
 
 const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
 const WORKSPACE_UUID = process.env.WORKSPACE_UUID;
-const WORKSPACE_URL_TEMPLATE = process.env.WORKSPACE_URL_TEMPLATE;
+const COMPLY_ENVIRONMENT = process.env.COMPLY_ENVIRONMENT?.trim();
+const WORKSPACE_URL_TEMPLATE = process.env.WORKSPACE_URL_TEMPLATE?.trim();
 const PUSH_TEMPLATE_UUID = process.env.PUSH_TEMPLATE_UUID;
 const WORKSPACE_PRIVATE_KEY = process.env.WORKSPACE_PRIVATE_KEY;
 const WORKSPACE_PRIVATE_KEY_PATH = process.env.WORKSPACE_PRIVATE_KEY_PATH;
@@ -48,11 +52,37 @@ function getWorkspacePrivateKey(): string | undefined {
   return undefined;
 }
 
-async function main() {
-  if (!ACCESS_TOKEN || !WORKSPACE_UUID || !WORKSPACE_URL_TEMPLATE) {
-    console.error(
-      'Missing required env: ACCESS_TOKEN, WORKSPACE_UUID, WORKSPACE_URL_TEMPLATE'
+function resolveSdkUrlOptions():
+  | { environment: ComplyEnvironment }
+  | { workspaceUrlTemplate: string } {
+  if (WORKSPACE_URL_TEMPLATE && COMPLY_ENVIRONMENT) {
+    throw new Error(
+      'Cannot set both COMPLY_ENVIRONMENT and WORKSPACE_URL_TEMPLATE. Use COMPLY_ENVIRONMENT (dev, int, or prod) or WORKSPACE_URL_TEMPLATE alone.'
     );
+  }
+  if (WORKSPACE_URL_TEMPLATE) {
+    return { workspaceUrlTemplate: WORKSPACE_URL_TEMPLATE };
+  }
+  const env = (COMPLY_ENVIRONMENT || 'int') as ComplyEnvironment;
+  if (!COMPLY_ENVIRONMENTS.includes(env)) {
+    throw new Error(
+      `Invalid COMPLY_ENVIRONMENT "${COMPLY_ENVIRONMENT}". Expected one of: dev, int, prod.`
+    );
+  }
+  return { environment: env };
+}
+
+async function main() {
+  if (!ACCESS_TOKEN || !WORKSPACE_UUID) {
+    console.error('Missing required env: ACCESS_TOKEN, WORKSPACE_UUID');
+    process.exit(1);
+  }
+
+  let urlOptions: ReturnType<typeof resolveSdkUrlOptions>;
+  try {
+    urlOptions = resolveSdkUrlOptions();
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : err);
     process.exit(1);
   }
 
@@ -68,7 +98,7 @@ async function main() {
 
   const sdk = await WecanComply.create({
     accessToken: ACCESS_TOKEN,
-    workspaceUrlTemplate: WORKSPACE_URL_TEMPLATE,
+    ...urlOptions,
     workspaceKeys,
     debug: process.env.DEBUG === '1',
   });

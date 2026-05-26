@@ -13,19 +13,25 @@ Demonstrates the External Form Request API: list, create, get metadata, and subm
 
 ### Run
 
-From the **repository root**:
+From the **repository root** (integration environment by default):
 
 ```bash
 ACCESS_TOKEN=your-token \
 WORKSPACE_UUID=your-workspace-uuid \
-WORKSPACE_URL_TEMPLATE='https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch' \
 npx tsx examples/external-form-request.ts
+```
+
+Other environments:
+
+```bash
+COMPLY_ENVIRONMENT=dev ACCESS_TOKEN=... WORKSPACE_UUID=... npx tsx examples/external-form-request.ts
+COMPLY_ENVIRONMENT=prod ACCESS_TOKEN=... WORKSPACE_UUID=... npx tsx examples/external-form-request.ts
 ```
 
 Or use the npm script:
 
 ```bash
-ACCESS_TOKEN=... WORKSPACE_UUID=... WORKSPACE_URL_TEMPLATE='...' npm run example:external-form-request
+ACCESS_TOKEN=... WORKSPACE_UUID=... npm run example:external-form-request
 ```
 
 ### Optional environment variables
@@ -34,7 +40,8 @@ ACCESS_TOKEN=... WORKSPACE_UUID=... WORKSPACE_URL_TEMPLATE='...' npm run example
 |----------|-------------|
 | `ACCESS_TOKEN` | API access token (required) |
 | `WORKSPACE_UUID` | Workspace UUID (required) |
-| `WORKSPACE_URL_TEMPLATE` | URL template, e.g. `https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch` (required) |
+| `COMPLY_ENVIRONMENT` | Wecan Comply environment: `dev`, `int`, or `prod` (default: `int`) |
+| `WORKSPACE_URL_TEMPLATE` | Legacy URL template, e.g. `https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch`. Do not set together with `COMPLY_ENVIRONMENT` |
 | `PUSH_TEMPLATE_UUID` | Push template UUID; if set, a new external form request is created |
 | `SUBMIT_ANSWERS` | Submit is **on by default**. Set to `0` or `false` to disable |
 | `DEBUG` | Set to `1` to log workspace API requests |
@@ -44,8 +51,18 @@ ACCESS_TOKEN=... WORKSPACE_UUID=... WORKSPACE_URL_TEMPLATE='...' npm run example
 ### Example: list and create
 
 ```bash
-ACCESS_TOKEN=xxx WORKSPACE_UUID=yyy WORKSPACE_URL_TEMPLATE='https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch' \
+ACCESS_TOKEN=xxx WORKSPACE_UUID=yyy \
 PUSH_TEMPLATE_UUID=your-push-template-uuid \
+npx tsx examples/external-form-request.ts
+```
+
+### Example: legacy URL template
+
+If you need a custom workspace URL template instead of `COMPLY_ENVIRONMENT`:
+
+```bash
+ACCESS_TOKEN=xxx WORKSPACE_UUID=yyy \
+WORKSPACE_URL_TEMPLATE='https://{workspaceUuid}.workspaces.int.wecancomply.arcanite.ch' \
 npx tsx examples/external-form-request.ts
 ```
 
@@ -54,7 +71,7 @@ npx tsx examples/external-form-request.ts
 To decrypt inline content when calling `getPushFormAnswerContents`, pass the workspace PGP private key:
 
 ```bash
-ACCESS_TOKEN=xxx WORKSPACE_UUID=yyy WORKSPACE_URL_TEMPLATE='...' \
+ACCESS_TOKEN=xxx WORKSPACE_UUID=yyy \
 WORKSPACE_PRIVATE_KEY_PATH=./workspace-private-key.asc \
 npx tsx examples/external-form-request.ts
 ```
@@ -63,5 +80,5 @@ Or set the key inline (e.g. from a secret manager):
 
 ```bash
 export WORKSPACE_PRIVATE_KEY="$(cat workspace-private-key.asc)"
-# then run the example with ACCESS_TOKEN, WORKSPACE_UUID, WORKSPACE_URL_TEMPLATE
+# then run the example with ACCESS_TOKEN and WORKSPACE_UUID
 ```
