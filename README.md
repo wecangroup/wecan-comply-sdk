@@ -105,13 +105,25 @@ await client.saveVaultAnswers(workspaceUuid, vaultId, modifiedAnswers);
 const pushCategories = await client.getPushCategories(workspaceUuid);
 const filteredCategories = await client.getPushCategories(workspaceUuid, 'template-type');
 
-// Create a new vault
+// Create a new vault (relation-based flow)
 const newVault = await client.createVault(
   workspaceUuid,
   'My Vault Name',
   'template-type',
-  'push-category-uuid',
-  ['relation-uuid-1', 'relation-uuid-2']
+  {
+    pushCategoryUuid: 'push-category-uuid',
+    relationUuids: ['relation-uuid-1', 'relation-uuid-2'],
+  }
+);
+
+// Create a solo vault from a push template (no relations required)
+const soloVault = await client.createVault(
+  workspaceUuid,
+  'My Solo Vault',
+  'template-type',
+  {
+    pushTemplateUuids: ['push-template-uuid'],
+  }
 );
 
 // Share a vault with a relation
@@ -365,6 +377,7 @@ import type {
   VaultPlaceholder,
   VaultAnswer,
   PushCategory,
+  CreateVaultOptions,
   
   // External Form Request
   ExternalFormRequest,

@@ -6,13 +6,14 @@ import type {
     VaultAnswerContent,
     VaultAnswerContentEntry,
     PushCategory,
-    VaultPlaceholder
+    VaultPlaceholder,
+    CreateVaultOptions
 } from '../../types/index.js';
 import type { FeatureContext } from './BaseFeature.js';
 import { getPublicKey } from '../../services/key-store.js';
 import { prepareInlineContent, prepareFileContent, uploadVaultFile } from './vault-content.js';
 import { getAnswerContents, processMissingShareableAnswerContent, validate, shareContent } from './vault-sharing.js';
-import { createVaultWithForms } from './vault-creation.js';
+import { createVaultWithForms, createVaultWithPushTemplates } from './vault-creation.js';
 import { decryptForMyWorkspace, toArrayBuffer, unpadData } from '../../services/encryption.js';
 
 /**
@@ -207,14 +208,28 @@ export class VaultFeature {
         }));
     }
 
-    async createVault(workspaceUuid: WorkspaceUuid, name: string, templateType: string, pushCategoryUuid: string, relationUuids: string[]): Promise<Vault> {
+    async createVault(
+        workspaceUuid: WorkspaceUuid,
+        name: string,
+        templateType: string,
+        options: CreateVaultOptions
+    ): Promise<Vault> {
         const workspaceClient = this.context.getWorkspaceClient(workspaceUuid);
 
-        // Get push templates
+        if ('pushTemplateUuids' in options) {
+            return await createVaultWithPushTemplates(
+                workspaceClient,
+                name,
+                templateType,
+                options.pushTemplateUuids,
+                options.relationUuids ?? []
+            );
+        }
+
         const pushCategories = await this.getPushCategories(workspaceUuid, templateType);
-        const pushCategory = pushCategories.find((category: any) => category.uuid === pushCategoryUuid);
+        const pushCategory = pushCategories.find((category: any) => category.uuid === options.pushCategoryUuid);
         if (!pushCategory) {
-            throw new Error(`Push category ${pushCategoryUuid} not found`);
+            throw new Error(`Push category ${options.pushCategoryUuid} not found`);
         }
 
         return await createVaultWithForms(
@@ -222,7 +237,7 @@ export class VaultFeature {
             name,
             templateType,
             pushCategory,
-            relationUuids
+            options.relationUuids
         );
     }
 

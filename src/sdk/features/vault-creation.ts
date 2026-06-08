@@ -25,6 +25,33 @@ export async function getInstanciableForms(
 }
 
 /**
+ * Register push forms directly from push template UUIDs (no relation-based form discovery)
+ */
+export async function registerPushFormsFromTemplates(
+    workspaceClient: WorkspaceClient,
+    pushTemplateUuids: string[],
+    answerPoolUuid: string,
+    relationUuids: string[] = []
+): Promise<void> {
+    for (const pushTemplateUuid of pushTemplateUuids) {
+        const pushForm = await workspaceClient.post<{ uuid: string }>(
+            `/api/forms/push-forms/actions/register/`,
+            {
+                push_template_uuid: pushTemplateUuid,
+                answer_pool_uuid: answerPoolUuid,
+            }
+        );
+
+        for (const relationUuid of relationUuids) {
+            await workspaceClient.post(`/api/forms/relation-push-forms/actions/register/`, {
+                push_form_uuid: pushForm.uuid,
+                relation_uuid: relationUuid,
+            });
+        }
+    }
+}
+
+/**
  * Register push forms and relation push forms for a vault
  */
 export async function registerPushForms(
@@ -51,8 +78,50 @@ export async function registerPushForms(
     }
 }
 
+function formatVaultCreationError(name: string, error: any): Error {
+    const errorMessage = error?.message || error?.response?.data?.message || 'Unknown error occurred';
+    const errorDetails = error?.response?.data ? JSON.stringify(error.response.data) : '';
+    return new Error(
+        `Failed to create vault "${name}": ${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`
+    );
+}
+
 /**
- * Create a new vault with push forms
+ * Create a new vault from explicit push template UUIDs (solo flow, relations optional)
+ */
+export async function createVaultWithPushTemplates(
+    workspaceClient: WorkspaceClient,
+    name: string,
+    templateType: string,
+    pushTemplateUuids: string[],
+    relationUuids: string[] = []
+): Promise<Vault> {
+    if (pushTemplateUuids.length === 0) {
+        throw new Error('At least one push template UUID is required');
+    }
+
+    try {
+        const answerPool = await workspaceClient.post<Vault>(`/api/forms/answer-pools/`, {
+            name: name,
+            template_type: templateType,
+            storage_type: 'block',
+        });
+
+        await registerPushFormsFromTemplates(
+            workspaceClient,
+            pushTemplateUuids,
+            answerPool.uuid,
+            relationUuids
+        );
+
+        return answerPool;
+    } catch (error: any) {
+        throw formatVaultCreationError(name, error);
+    }
+}
+
+/**
+ * Create a new vault with push forms discovered via push category and relations
  */
 export async function createVaultWithForms(
     workspaceClient: WorkspaceClient,
@@ -91,11 +160,7 @@ export async function createVaultWithForms(
 
         return answerPool;
     } catch (error: any) {
-        const errorMessage = error?.message || error?.response?.data?.message || 'Unknown error occurred';
-        const errorDetails = error?.response?.data ? JSON.stringify(error.response.data) : '';
-        throw new Error(
-            `Failed to create vault "${name}": ${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`
-        );
+        throw formatVaultCreationError(name, error);
     }
 }
 

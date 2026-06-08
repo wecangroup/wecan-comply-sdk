@@ -186,6 +186,20 @@ export interface PushCategory {
     push_template_uuids: string[];
 }
 
+/**
+ * Options for creating a vault.
+ * Use pushCategoryUuid for the relation-based flow, or pushTemplateUuids for a solo vault.
+ */
+export type CreateVaultOptions =
+    | {
+          pushCategoryUuid: string;
+          relationUuids: string[];
+      }
+    | {
+          pushTemplateUuids: string[];
+          relationUuids?: string[];
+      };
+
 export type ExternalFormRequestUuid = string;
 
 export type ExternalFormRequestStatus = 'active' | 'archived' | 'expired';

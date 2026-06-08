@@ -14,6 +14,7 @@ import type {
     VaultUuid,
     VaultAnswer,
     Vault,
+    CreateVaultOptions,
     VaultPlaceholder,
     ExternalFormRequestUuid,
     ExternalFormRequest,
@@ -475,22 +476,22 @@ export class WecanComply {
     }
 
     /**
-     * Create a new vault with push forms and relations
+     * Create a new vault with push forms.
+     * Use pushCategoryUuid + relationUuids for the relation-based flow,
+     * or pushTemplateUuids for a solo vault (relations optional).
      * @param workspaceUuid - The UUID of the workspace
      * @param name - Name of the vault
      * @param templateType - Type of template to use
-     * @param pushCategoryUuid - UUID of the push category
-     * @param relationUuids - List of relation UUIDs to associate with the vault
+     * @param options - Vault creation options
      * @returns The created vault
      */
     async createVault(
         workspaceUuid: WorkspaceUuid,
         name: string,
         templateType: string,
-        pushCategoryUuid: string,
-        relationUuids: string[]
+        options: CreateVaultOptions
     ): Promise<Vault> {
-        return this.vault.createVault(workspaceUuid, name, templateType, pushCategoryUuid, relationUuids);
+        return this.vault.createVault(workspaceUuid, name, templateType, options);
     }
 
     /**
